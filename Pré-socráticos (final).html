@@ -78,18 +78,41 @@ margin:auto;
 
 #game-board{
 display:grid;
-grid-template-columns:repeat(10,1fr);
+grid-template-columns:repeat(8,1fr); /* Reduzido de 10 para 8 para melhor distribuição geral */
 gap:12px;
 perspective:1500px;
 margin-top:10px;
 margin-bottom:30px;
 }
 
-@media (max-width:1200px){#game-board{grid-template-columns:repeat(5,1fr);}}
-@media (max-width:600px){#game-board{grid-template-columns:repeat(2,1fr);}}
+/* Telas médias (Tablets) */
+@media (max-width:1200px){
+    #game-board{grid-template-columns:repeat(5,1fr);}
+    .card{height:120px;}
+    .card-front{font-size:2.5rem;}
+}
+
+/* Telas pequenas (Celulares) */
+@media (max-width:600px){
+    #game-board{
+        grid-template-columns:repeat(4,1fr); /* 4 cartas por linha em vez de 2 */
+        gap:6px; /* Espaço menor entre as cartas */
+    }
+    .card{
+        height:85px; /* Cartas bem mais baixas para caber na tela sem rolar muito */
+    }
+    .card-face{
+        padding:4px; /* Menos preenchimento para sobrar espaço para o texto */
+        font-size:0.75rem; /* Fonte menor para caber os textos grandes */
+        border-radius:8px; /* Bordas levemente mais arredondadas para o novo tamanho */
+    }
+    .card-front{
+        font-size:1.8rem; /* Símbolo Phi (Φ) menor */
+    }
+}
 
 .card{
-height:145px;
+height:145px; /* Tamanho padrão para PC mantido */
 position:relative;
 cursor:pointer;
 transform-style:preserve-3d;
@@ -114,6 +137,7 @@ box-shadow:0 4px 8px rgba(0,0,0,0.1);
 text-align:center;
 border:2px solid transparent;
 word-wrap:break-word;
+overflow:hidden; 
 }
 
 .card-front{
