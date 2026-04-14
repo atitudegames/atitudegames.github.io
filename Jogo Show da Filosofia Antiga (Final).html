@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show do Saber - O início da Filosofia</title>
+    <!-- Tailwind CSS para Estilização Responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Animações e Estilos Personalizados */
+        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .flip-card { perspective: 1000px; }
+        .flip-card-inner {
+            position: relative; width: 100%; height: 100%; text-align: center;
+            transition: transform 0.6s; transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 0.75rem;
+        }
+        .flip-card-back { transform: rotateY(180deg); }
+        
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Opções de Resposta */
+        .option-btn { transition: all 0.3s ease; }
+        .option-normal { background-color: #1e293b; border-color: #475569; color: #e2e8f0; }
+        .option-normal:hover:not(:disabled) { background-color: #334155; border-color: #eab308; cursor: pointer; }
+        .option-selected { background-color: #eab308; border-color: #ca8a04; color: #000; font-weight: bold; transform: scale(1.02); }
+        .option-correct { background-color: #16a34a; border-color: #15803d; color: #fff; font-weight: bold; animation: pulse 1s infinite; }
+        .option-wrong { background-color: #dc2626; border-color: #b91c1c; color: #fff; opacity: 0.8; }
+        .option-eliminated { opacity: 0.2; pointer-events: none; text-decoration: line-through; background-color: #0f172a; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        
+        /* Ocultar elementos */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen selection:bg-yellow-500 selection:text-black pb-10">
+
+    <!-- Áudios de Fundo -->
+    <audio id="audioTension" src="https://cdn.pixabay.com/audio/2022/03/14/audio_c67d746e5d.mp3" preload="auto" loop></audio>
+    <audio id="audioVictory" src="https://cdn.pixabay.com/download/audio/2021/08/09/audio_8dd9f5466a.mp3" preload="auto"></audio>
+
+    <!-- HEADER -->
+    <header class="bg-slate-950 p-4 border-b border-yellow-600/30 flex justify-end items-center shadow-lg sticky top-0 z-10 relative">
+        
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 w-max">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-slate-900 font-bold p-2 shadow-md">
+                <svg fill="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/>
+                </svg>
+            </div>
+            <div class="flex flex-col text-center">
+                <h1 class="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-yellow-600 uppercase tracking-widest leading-tight">
+                    Show do Saber
+                </h1>
+                <span class="text-[10px] md:text-xs text-slate-400 tracking-wider uppercase">O início da Filosofia</span>
+            </div>
+        </div>
+
+        <div class="flex gap-2 md:gap-4 relative z-10">
+            <button onclick="toggleAudio()" id="btn-audio" class="p-2 rounded-full hover:bg-slate-800 text-yellow-500 transition" title="Ligar/Desligar Música">
+                <i class="fas fa-volume-up text-xl"></i>
+            </button>
+            <button onclick="toggleFullscreen()" class="p-2 rounded-full hover:bg-slate-800 text-yellow-500 transition" title="Tela Cheia">
+                <i class="fas fa-expand text-xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-7xl mx-auto relative z-0">
+        
+        <!-- TELA 1: SETUP -->
+        <section id="screen-setup" class="bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl max-w-md w-full border border-yellow-600/20">
+            <h2 class="text-2xl md:text-3xl text-center mb-6 font-semibold text-yellow-500 leading-tight">
+                Quem chegará ao prêmio máximo da sabedoria?
+            </h2>
+            
+            <div class="mb-6">
+                <label class="block text-sm text-slate-400 mb-2">Número de Jogadores (1 a 4)</label>
+                <div class="flex gap-2" id="player-count-btns">
+                    <button onclick="setNumPlayers(1); playSFX('click');" class="player-btn flex-1 py-2 rounded-lg font-bold transition bg-yellow-600 text-slate-900">1</button>
+                    <button onclick="setNumPlayers(2); playSFX('click');" class="player-btn flex-1 py-2 rounded-lg font-bold transition bg-slate-700 hover:bg-slate-600">2</button>
+                    <button onclick="setNumPlayers(3); playSFX('click');" class="player-btn flex-1 py-2 rounded-lg font-bold transition bg-slate-700 hover:bg-slate-600">3</button>
+                    <button onclick="setNumPlayers(4); playSFX('click');" class="player-btn flex-1 py-2 rounded-lg font-bold transition bg-slate-700 hover:bg-slate-600">4</button>
+                </div>
+            </div>
+
+            <div id="player-inputs" class="space-y-4 mb-8">
+                <!-- Inputs gerados via JS -->
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-slate-900 font-bold text-xl py-3 rounded-xl hover:scale-105 transition-transform shadow-lg shadow-yellow-600/30">
+                <i class="fas fa-play mr-2"></i> INICIAR JOGO
+            </button>
+        </section>
+
+
+        <!-- TELA 2: MATEMÁTICA (Seja rápido e certeiro) -->
+        <section id="screen-math" class="hidden bg-slate-800 p-6 md:p-10 rounded-2xl shadow-2xl max-w-2xl w-full text-center border border-yellow-600/30 fade-in">
+            <h2 class="text-xl text-yellow-500 mb-2 uppercase tracking-wider"><i class="fas fa-bolt mr-2"></i> Seja rápido e certeiro!</h2>
+            <p class="text-slate-400 mb-8 text-sm md:text-base">Resolva a conta de cabeça. O professor revelará a resposta e escolherá quem respondeu primeiro.</p>
+            
+            <div id="math-expression" class="text-5xl md:text-7xl font-mono font-bold text-white mb-6 tracking-widest bg-slate-950 py-8 rounded-xl border-y border-yellow-500/50">
+                15 + 27
+            </div>
+
+            <div class="h-24 flex items-center justify-center mb-6">
+                <div id="math-answer-area">
+                    <button onclick="revealMathAnswer()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition font-bold text-lg shadow-lg">
+                        <i class="fas fa-eye mr-2"></i> Revelar Resposta
+                    </button>
+                </div>
+                <div id="math-revealed-area" class="hidden text-6xl font-bold text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">
+                    42
+                </div>
+            </div>
+
+            <div id="math-player-selection" class="hidden fade-in">
+                <p class="text-slate-400 mb-4 text-sm uppercase">Quem acertou?</p>
+                <div id="math-player-buttons" class="flex flex-wrap justify-center gap-3 mb-6">
+                    <!-- Botões gerados via JS -->
+                </div>
+                <button onclick="generateMathProblem()" class="px-4 py-2 border border-slate-500 text-slate-400 rounded-lg hover:bg-slate-700 transition mt-4">
+                    <i class="fas fa-redo mr-2"></i> Ninguém acertou (Nova Conta)
+                </button>
+            </div>
+        </section>
+
+
+        <!-- TELA 3: PERGUNTAS -->
+        <section id="screen-question" class="hidden w-full max-w-6xl fade-in flex-col gap-4">
+            
+            <!-- PLACAR NO TOPO -->
+            <div class="bg-slate-800 rounded-xl p-3 md:p-4 border border-slate-700 shadow-lg mb-2">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    
+                    <!-- Jogador Atual Info -->
+                    <div class="flex items-center gap-3">
+                        <div id="active-player-avatar" class="w-12 h-12 md:w-14 md:h-14 bg-yellow-500 rounded-full flex items-center justify-center text-slate-900 font-bold text-2xl border-2 border-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.5)]">
+                            J
+                        </div>
+                        <div>
+                            <div class="text-slate-400 text-xs md:text-sm uppercase tracking-wide">Quem responde:</div>
+                            <div id="active-player-name" class="text-xl md:text-2xl font-bold text-white">Jogador 1</div>
+                        </div>
+                    </div>
+
+                    <!-- Placar Geral (Multiplayer) -->
+                    <div id="scoreboard-container" class="flex flex-wrap justify-center gap-2 md:gap-4 flex-grow px-4">
+                        <!-- Gerado via JS -->
+                    </div>
+
+                    <!-- Prêmio e Timer -->
+                    <div class="flex items-center gap-4 md:gap-6 border-t md:border-t-0 border-slate-600 pt-3 md:pt-0 w-full md:w-auto justify-between md:justify-end">
+                        <div class="flex items-center gap-2 bg-slate-900 rounded-lg p-2 border border-slate-700">
+                            <i id="timer-icon" class="fas fa-clock text-slate-400"></i>
+                            <span id="timer-display" class="text-2xl font-mono w-10 text-center text-white">60</span>
+                            <button onclick="toggleTimer()" id="timer-btn" class="ml-1 text-yellow-500 hover:text-yellow-400">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-slate-400 text-xs md:text-sm uppercase">Acumulado</div>
+                            <div id="current-prize" class="text-xl md:text-2xl font-bold text-yellow-400">1 Mil Saberes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Área da Pergunta e Alternativas -->
+                <div class="lg:col-span-3 flex flex-col gap-4">
+                    
+                    <!-- Caixa da Pergunta -->
+                    <div class="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-6 md:p-10 border border-yellow-600/30 relative shadow-xl min-h-[180px] flex items-center justify-center">
+                        <span id="question-number" class="absolute top-4 left-6 text-sm font-bold text-yellow-600/50 uppercase tracking-widest">
+                            Pergunta 1
+                        </span>
+                        <h2 id="question-text" class="text-xl md:text-3xl font-medium text-white text-center leading-relaxed mt-4">
+                            Carregando pergunta...
+                        </h2>
+                    </div>
+
+                    <!-- Dica dos Universitários -->
+                    <div id="hint-box" class="hidden p-4 bg-blue-900/30 border border-blue-500/30 rounded-xl flex items-start gap-4 text-blue-200 fade-in">
+                        <div class="p-2 bg-blue-500/20 rounded-lg"><i class="fas fa-graduation-cap text-blue-400 text-xl"></i></div>
+                        <div>
+                            <h4 class="font-bold text-blue-400 mb-1">Dica dos Universitários:</h4>
+                            <p id="hint-text">Texto da dica.</p>
+                        </div>
+                    </div>
+
+                    <!-- Opções -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4" id="options-container">
+                        <button onclick="handleOptionClick(0)" id="opt-0" class="option-btn option-normal p-4 md:p-6 rounded-xl border-2 flex items-center gap-4 text-left text-base md:text-lg w-full">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-yellow-500 shrink-0">A</div>
+                            <span id="opt-text-0">Opção A</span>
+                        </button>
+                        <button onclick="handleOptionClick(1)" id="opt-1" class="option-btn option-normal p-4 md:p-6 rounded-xl border-2 flex items-center gap-4 text-left text-base md:text-lg w-full">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-yellow-500 shrink-0">B</div>
+                            <span id="opt-text-1">Opção B</span>
+                        </button>
+                        <button onclick="handleOptionClick(2)" id="opt-2" class="option-btn option-normal p-4 md:p-6 rounded-xl border-2 flex items-center gap-4 text-left text-base md:text-lg w-full">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-yellow-500 shrink-0">C</div>
+                            <span id="opt-text-2">Opção C</span>
+                        </button>
+                        <button onclick="handleOptionClick(3)" id="opt-3" class="option-btn option-normal p-4 md:p-6 rounded-xl border-2 flex items-center gap-4 text-left text-base md:text-lg w-full">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-yellow-500 shrink-0">D</div>
+                            <span id="opt-text-3">Opção D</span>
+                        </button>
+                    </div>
+
+                    <!-- Botão de Avançar -->
+                    <div id="next-action-container" class="hidden flex justify-end mt-4 fade-in">
+                        <button onclick="nextTurn()" class="px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold text-xl rounded-xl hover:scale-105 transition shadow-lg shadow-yellow-600/30 flex items-center gap-2">
+                            Próxima Etapa <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Barra Lateral de Controles -->
+                <div class="flex flex-col gap-4">
+                    <!-- Cartas de Ajuda -->
+                    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+                        <h3 class="text-slate-400 text-xs md:text-sm font-bold uppercase mb-4 text-center tracking-wider">Cartas de Ajuda</h3>
+                        <div class="flex gap-3">
+                            <button id="btn-uni" onclick="useUniversitario()" class="flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border transition border-blue-500 bg-blue-900/20 hover:bg-blue-900/40 text-blue-400">
+                                <i class="fas fa-users text-2xl"></i>
+                                <span class="text-[10px] md:text-xs font-bold uppercase">Universitários</span>
+                            </button>
+                            <button id="btn-elim" onclick="useEliminar()" class="flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border transition border-red-500 bg-red-900/20 hover:bg-red-900/40 text-red-400">
+                                <i class="fas fa-times-circle text-2xl"></i>
+                                <span class="text-[10px] md:text-xs font-bold uppercase">Eliminar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ações do Jogador -->
+                    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex-grow flex flex-col justify-center">
+                        <h3 class="text-slate-400 text-xs md:text-sm font-bold uppercase mb-4 text-center tracking-wider">Ação</h3>
+                        <button id="btn-parar" onclick="handleParar()" class="w-full flex items-center justify-center gap-2 py-4 md:py-6 bg-slate-700 text-yellow-400 border border-slate-600 rounded-xl hover:bg-slate-600 hover:border-yellow-500 transition shadow-lg">
+                            <i class="fas fa-hand-paper text-2xl"></i> <span class="font-bold text-lg md:text-xl">Parar Agora</span>
+                        </button>
+                        <p class="text-xs text-slate-400 text-center mt-3">Garante os saberes atuais sem risco de perder.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- MODAL: CARTAS ELIMINAR -->
+        <div id="modal-eliminar" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 fade-in">
+            <div class="bg-slate-800 p-6 md:p-8 rounded-2xl border border-red-500/50 text-center max-w-2xl w-full mx-4 shadow-2xl shadow-red-900/50">
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Escolha uma Carta</h2>
+                <p class="text-slate-400 mb-8 text-sm md:text-base">Ela revelará quantas alternativas erradas serão eliminadas (0 a 3).</p>
+                
+                <div class="flex justify-center gap-4 flex-wrap" id="eliminar-cards-container">
+                    <!-- Cards gerados por JS -->
+                </div>
+            </div>
+        </div>
+
+
+        <!-- TELA 4: FIM DE JOGO -->
+        <section id="screen-end" class="hidden bg-slate-800 p-8 md:p-12 rounded-2xl shadow-2xl max-w-3xl w-full border border-yellow-600/30 text-center fade-in">
+            <i class="fas fa-trophy text-6xl md:text-8xl text-yellow-500 mb-6 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]"></i>
+            <h2 class="text-3xl md:text-5xl text-white font-bold mb-4 uppercase tracking-widest">Sabedoria na conta!</h2>
+            
+            <div id="winner-message-container" class="mb-8">
+                <!-- Mensagem de parabéns gerada via JS -->
+            </div>
+            
+            <div id="ranking-container" class="space-y-4 mb-10 text-left">
+                <!-- Ranking gerado via JS -->
+            </div>
+
+            <button onclick="playSFX('click'); setTimeout(() => window.location.reload(), 200);" class="px-8 py-4 bg-slate-700 text-white font-bold rounded-xl hover:bg-slate-600 transition text-lg flex items-center justify-center mx-auto gap-2">
+                <i class="fas fa-redo"></i> Jogar Novamente
+            </button>
+        </section>
+
+    </main>
+
+    <!-- RODAPÉ FIXO DE CRÉDITOS -->
+    <footer class="fixed bottom-0 w-full p-2 text-center text-[11px] md:text-xs text-slate-500 z-0 bg-slate-950/80 backdrop-blur-sm pointer-events-none">
+        Desenvolvido por <a href="https://instagram.com/marcoasf_" target="_blank" class="text-yellow-600/80 hover:text-yellow-400 font-medium transition pointer-events-auto">Marco Antonio da Silva Filho (Professor de Filosofia)</a> com o auxílio de IA (Gemini)
+    </footer>
+
+    <!-- LÓGICA DO JOGO EM JAVASCRIPT -->
+    <script>
+        // CONFIGURAÇÕES
+        const prizeTiers = [
+            "0 Saberes", "1 Mil Saberes", "5 Mil Saberes", "10 Mil Saberes", "50 Mil Saberes", 
+            "100 Mil Saberes", "200 Mil Saberes", "300 Mil Saberes", "500 Mil Saberes", "800 Mil Saberes", "1 MILHÃO DE SABERES!"
+        ];
+// 1. COLE O CÓDIGO DA MÚSICA AQUI:
+const sons = {
+    victory: new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3')
+};
+
+function playMusic(tipo) {
+    if (sons[tipo]) {
+        sons[tipo].play().catch(e => console.log("Áudio bloqueado:", e)); 
+    }
+}
+        // BANCO DE PERGUNTAS (Adaptado dos PDFs)
+        const questionDB = [
+            // FÁCEIS
+            { text: "Qual filósofo é considerado o primeiro da história e afirmava que o princípio de tudo é a água?", options: ["Anaximandro", "Tales de Mileto", "Heráclito", "Pitágoras"], correct: 1, difficulty: 1, hint: "Ele era da cidade de Mileto e previu um eclipse." },
+            { text: "Qual era o foco principal de estudo dos primeiros filósofos pré-socráticos?", options: ["A ética humana", "A política ateniense", "A Physis (Natureza)", "A retórica e persuasão"], correct: 2, difficulty: 1, hint: "Eles buscavam entender o princípio (arché) do cosmos natural." },
+            { text: "A famosa frase 'Só sei que nada sei' é atribuída a qual filósofo?", options: ["Sócrates", "Platão", "Protágoras", "Górgias"], correct: 0, difficulty: 1, hint: "Foi o mestre de Platão e foi condenado à morte em Atenas." },
+            { text: "Os sofistas eram conhecidos na Grécia Antiga principalmente por:", options: ["Buscarem a verdade absoluta", "Ensinarem a arte da retórica e persuasão", "Dedicarem-se à matemática", "Fugirem da vida política"], correct: 1, difficulty: 1, hint: "Eles eram professores itinerantes pagos para ensinar a falar bem." },
+            { text: "Para Heráclito de Éfeso, qual elemento simbolizava o devir (a mudança constante) de todas as coisas?", options: ["Água", "Fogo", "Terra", "Ar"], correct: 1, difficulty: 1, hint: "É um elemento que transforma, consome e ilumina." },
+            { text: "Pitágoras de Samos acreditava que o princípio de todas as coisas residia:", options: ["No fogo", "No átomo", "Nos números", "No ar"], correct: 2, difficulty: 1, hint: "A resposta tem a ver com matemática e harmonia." },
+            { text: "Qual filósofo pré-socrático afirmava que 'tudo flui' e que não se pode entrar duas vezes no mesmo rio?", options: ["Parmênides", "Zenão", "Heráclito", "Demócrito"], correct: 2, difficulty: 1, hint: "Ele é conhecido como o filósofo do 'devir' (mudança)." },
+            { text: "Protágoras, um dos sofistas mais famosos, cunhou qual destas frases?", options: ["O homem é a medida de todas as coisas", "Penso, logo existo", "A água é a origem de tudo", "A virtude é inata"], correct: 0, difficulty: 1, hint: "A frase indica um forte relativismo centrado no ser humano." },
+            { text: "Qual foi o método desenvolvido por Sócrates para levar seus interlocutores a darem à luz o conhecimento?", options: ["Retórica", "Maiêutica", "Sofística", "Doxografia"], correct: 1, difficulty: 1, hint: "O nome faz alusão ao trabalho de sua mãe, que era parteira." },
+            { text: "O que significa o termo 'Arché', tão buscado pelos pré-socráticos?", options: ["O fim do mundo", "O princípio fundamental de todas as coisas", "A ilusão dos sentidos", "A deusa da sabedoria"], correct: 1, difficulty: 1, hint: "É a origem, o começo, a substância primordial." },
+            // MÉDIAS
+            { text: "Para Anaximandro, o princípio de todas as coisas não poderia ser um elemento definido, mas sim algo infinito e indeterminado. Como ele chamou esse princípio?", options: ["Nous", "Logos", "Ápeiron", "Pneuma"], correct: 2, difficulty: 2, hint: "A palavra grega significa literalmente 'sem limites' ou 'indeterminado'." },
+            { text: "Em oposição a Heráclito, qual filósofo pré-socrático afirmava que o Ser é único, imóvel e imutável, e que o movimento é uma ilusão?", options: ["Tales", "Parmênides", "Empédocles", "Alcmeão"], correct: 1, difficulty: 2, hint: "Ele escreveu um poema revelado por uma deusa sobre o 'caminho da verdade' e o 'caminho da opinião'." },
+            { text: "A 'Ironia', na primeira fase do método socrático, servia para:", options: ["Humilhar o adversário", "Mostrar que o conhecimento vem dos deuses", "Levar o interlocutor a reconhecer a própria ignorância", "Provar que os sofistas estavam certos"], correct: 2, difficulty: 2, hint: "O objetivo era limpar o terreno, destruindo falsas certezas antes de construir o saber." },
+            { text: "Os filósofos Leucipo e Demócrito propuseram que a realidade é composta por partículas indivisíveis que se movem no vazio. Como são chamadas?", options: ["Mônadas", "Átomos", "Sementes", "Elementos"], correct: 1, difficulty: 2, hint: "A palavra grega significa 'indivisível'." },
+            { text: "Qual das opções define melhor a diferença entre Sócrates e os Sofistas na concepção da virtude (Areté)?", options: ["Para Sócrates não pode ser ensinada, para os sofistas sim.", "Para os sofistas a virtude é relativa e técnica, para Sócrates é um conhecimento universal da verdade.", "Sócrates cobrava mais caro para ensinar.", "Ambos concordavam que a virtude era privilégio da aristocracia."], correct: 1, difficulty: 2, hint: "Os sofistas eram relativistas, Sócrates buscava a essência universal." },
+            { text: "O sofista Protágoras, ao afirmar que 'O homem é a medida de todas as coisas', estava defendendo uma posição conhecida como:", options: ["Dogmatismo", "Absolutismo", "Relativismo", "Niilismo"], correct: 2, difficulty: 2, hint: "Significa que a verdade depende de quem percebe e do contexto." },
+            { text: "Como conhecemos o pensamento de Sócrates, já que ele não deixou nada escrito?", options: ["Através de papiros egípcios", "Pelos escritos de seus discípulos, principalmente Platão", "Através de inscrições no Partenon", "Pelos registros oficiais de seu julgamento"], correct: 1, difficulty: 2, hint: "O autor de 'A República' foi sua principal fonte." },
+            { text: "Segundo Sócrates, qual é a diferença entre 'Doxa' e 'Episteme'?", options: ["Doxa é ciência, Episteme é arte", "Doxa é opinião (ilusória), Episteme é conhecimento verdadeiro", "Ambas significam a mesma coisa", "Doxa é divina, Episteme é humana"], correct: 1, difficulty: 2, hint: "Os sofistas ficavam na Doxa; Sócrates buscava a Episteme." },
+            // DIFÍCEIS
+            { text: "Qual conceito é introduzido por Empédocles como as duas forças cósmicas responsáveis por unir e separar os quatro elementos?", options: ["Bem e Mal", "Justiça e Injustiça", "Amor (Philia) e Ódio (Neikos)", "Luz e Trevas"], correct: 2, difficulty: 3, hint: "Uma força agrega e atrai, a outra segrega e repele." },
+            { text: "Anaxágoras de Clazômenas propôs que a realidade é formada por infinitas 'sementes'. Qual é a inteligência ordenadora que organiza essas sementes?", options: ["Demiurgo", "Logos", "Nous", "Khaos"], correct: 2, difficulty: 3, hint: "A palavra grega significa 'Mente' ou 'Intelecto'." },
+            { text: "O paradoxo de Aquiles e a Tartaruga foi formulado por qual filósofo para defender as ideias de Parmênides contra o movimento?", options: ["Zenão de Eleia", "Melisso de Samos", "Xenófanes", "Crisipo"], correct: 0, difficulty: 3, hint: "Ele era o principal discípulo de Parmênides." },
+            { text: "Como os sofistas encaravam o conceito de 'Nomos' (leis/costumes) em relação à 'Physis' (natureza)?", options: ["Nomos e Physis são a mesma coisa.", "Nomos é eterno, Physis é passageira.", "Nomos é uma convenção humana e cultural, muitas vezes oposta à Physis.", "Ignoravam a distinção."], correct: 2, difficulty: 3, hint: "Para eles, o que é lei numa cidade pode ser diferente em outra." },
+            { text: "Qual era a utilidade da técnica sofística de 'tornar mais forte o argumento mais fraco'?", options: ["Provar teorias físicas", "Vencer debates em tribunais e assembleias, independente da razão", "Descobrir a verdade universal", "Homenagear os deuses"], correct: 1, difficulty: 3, hint: "Era uma ferramenta prática para a ascensão política e absolvição legal." },
+            { text: "Na ontologia de Parmênides, o não-ser:", options: ["É a origem do universo", "É puramente material", "Não é e não pode ser pensado", "Coexiste em harmonia com o ser"], correct: 2, difficulty: 3, hint: "A premissa básica dele é: 'O que é, é; o que não é, não é'." }
+        ];
+
+ // CONTEXTO DE ÁUDIO DO NAVEGADOR (SINTETIZADOR)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // VARIÁVEIS DE ESTADO
+        let numPlayers = 1;
+        let players = [];
+        let gameQuestions = [];
+        let currentQuestionIndex = 0;
+        let activePlayerId = null;
+        let mathAnswer = 0;
+        let timer = 60;
+        let timerInterval = null;
+        let isAnswering = false;
+        let eliminatedOptions = [];
+        let audioEnabled = true;
+
+        // ELEMENTOS DOM
+        const screenSetup = document.getElementById('screen-setup');
+        const screenMath = document.getElementById('screen-math');
+        const screenQuestion = document.getElementById('screen-question');
+        const screenEnd = document.getElementById('screen-end');
+        
+        const audioTension = document.getElementById('audioTension');
+        const audioVictory = document.getElementById('audioVictory');
+        const btnAudio = document.getElementById('btn-audio');
+
+        // Configura volume inicial
+        audioTension.volume = 0.2;
+        audioVictory.volume = 0.8;
+
+        // INICIALIZAÇÃO E DESBLOQUEIO DE ÁUDIO FORÇADO
+        window.onload = () => {
+            renderPlayerInputs();
+            
+            // Força o navegador a permitir áudio no primeiro clique
+            document.body.addEventListener('click', () => {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                audioTension.load();
+                audioVictory.load();
+            }, { once: true });
+        };
+
+        // CONTROLE DE ÁUDIO E SFX
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            btnAudio.innerHTML = audioEnabled ? '<i class="fas fa-volume-up text-xl"></i>' : '<i class="fas fa-volume-mute text-xl text-red-400"></i>';
+            if (!audioEnabled) {
+                audioTension.pause();
+                audioVictory.pause();
+            } else if (!screenSetup.classList.contains('hidden') && screenEnd.classList.contains('hidden')) {
+                audioTension.play().catch(e => console.log("Áudio bloqueado", e));
+            }
+        }
+
+        function playMusic(type) {
+            if (!audioEnabled) return;
+            if (type === 'tension') {
+                audioVictory.pause();
+                audioVictory.currentTime = 0;
+                audioTension.play().catch(e => console.log("Áudio bloqueado", e));
+            } else if (type === 'victory') {
+                audioTension.pause();
+                audioTension.currentTime = 0;
+                audioVictory.play().catch(e => console.log("Áudio bloqueado", e));
+            }
+        }
+
+        function playSFX(type) {
+            if (!audioEnabled) return;
+            
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                // Som curto de clique
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, now);
+                oscillator.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                oscillator.start(now);
+                oscillator.stop(now + 0.1);
+                
+            } else if (type === 'correct') {
+                // Arpejo feliz
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(440, now);        
+                oscillator.frequency.setValueAtTime(554.37, now + 0.1); 
+                oscillator.frequency.setValueAtTime(659.25, now + 0.2); 
+                oscillator.frequency.setValueAtTime(880, now + 0.3);    
+                gainNode.gain.setValueAtTime(0.4, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                oscillator.start(now);
+                oscillator.stop(now + 0.5);
+                
+            } else if (type === 'wrong') {
+                // Som grave (erro)
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, now);
+                oscillator.frequency.linearRampToValueAtTime(80, now + 0.4);
+                gainNode.gain.setValueAtTime(0.4, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                oscillator.start(now);
+                oscillator.stop(now + 0.5);
+            }
+        }
+
+        // TELA CHEIA
+        function toggleFullscreen() {
+            playSFX('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.error(err));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // TELA 1: SETUP
+        function setNumPlayers(n) {
+            numPlayers = n;
+            document.querySelectorAll('.player-btn').forEach((btn, idx) => {
+                if (idx + 1 === n) {
+                    btn.className = "player-btn flex-1 py-2 rounded-lg font-bold transition bg-yellow-600 text-slate-900";
+                } else {
+                    btn.className = "player-btn flex-1 py-2 rounded-lg font-bold transition bg-slate-700 hover:bg-slate-600 text-white";
+                }
+            });
+            renderPlayerInputs();
+        }
+
+        function renderPlayerInputs() {
+            const container = document.getElementById('player-inputs');
+            container.innerHTML = '';
+            for (let i = 0; i < numPlayers; i++) {
+                container.innerHTML += `
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Nome do Jogador ${i + 1}</label>
+                        <input type="text" id="p-name-${i}" placeholder="Jogador ${i + 1}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-500 transition text-white" />
+                    </div>
+                `;
+            }
+        }
+
+        function startGame() {
+            playSFX('click');
+            
+            players = [];
+            for (let i = 0; i < numPlayers; i++) {
+                const nameInput = document.getElementById(`p-name-${i}`).value;
+                players.push({
+                    id: i,
+                    name: nameInput || `Jogador ${i + 1}`,
+                    scoreIndex: 0,
+                    active: true,
+                    stopped: false,
+                    lifelines: { uni: true, elim: true }
+                });
+            }
+
+            gameQuestions = [...questionDB].sort(() => Math.random() - 0.5);
+            currentQuestionIndex = 0;
+
+            playMusic('tension');
+
+            screenSetup.classList.add('hidden');
+            
+            if (numPlayers === 1) {
+                activePlayerId = 0;
+                setupQuestionPhase();
+            } else {
+                generateMathProblem();
+            }
+        }
+
+        // TELA 2: MATEMÁTICA
+        function generateMathProblem() {
+            screenMath.classList.remove('hidden');
+            screenQuestion.classList.add('hidden');
+            
+            document.getElementById('math-answer-area').classList.remove('hidden');
+            document.getElementById('math-revealed-area').classList.add('hidden');
+            document.getElementById('math-player-selection').classList.add('hidden');
+
+            const ops = ['+', '-', '*'];
+            const op = ops[Math.floor(Math.random() * ops.length)];
+            let a, b;
+            
+            if (op === '+') {
+                a = Math.floor(Math.random() * 50) + 10;
+                b = Math.floor(Math.random() * 50) + 10;
+                mathAnswer = a + b;
+            } else if (op === '-') {
+                a = Math.floor(Math.random() * 50) + 30;
+                b = Math.floor(Math.random() * a) + 1;
+                mathAnswer = a - b;
+            } else {
+                a = Math.floor(Math.random() * 10) + 2;
+                b = Math.floor(Math.random() * 10) + 2;
+                mathAnswer = a * b;
+            }
+            
+            document.getElementById('math-expression').innerText = `${a} ${op} ${b}`;
+            
+            const btnContainer = document.getElementById('math-player-buttons');
+            btnContainer.innerHTML = '';
+            players.forEach(p => {
+                if (p.active && !p.stopped) {
+                    btnContainer.innerHTML += `
+                        <button onclick="selectPlayerFromMath(${p.id})" class="px-6 py-3 bg-gradient-to-b from-yellow-500 to-yellow-600 text-slate-900 font-bold rounded-xl hover:scale-105 transition shadow-md">
+                            ${p.name}
+                        </button>
+                    `;
+                }
+            });
+        }
+
+        function revealMathAnswer() {
+            playSFX('click');
+            document.getElementById('math-answer-area').classList.add('hidden');
+            const revealed = document.getElementById('math-revealed-area');
+            revealed.innerText = mathAnswer;
+            revealed.classList.remove('hidden');
+            document.getElementById('math-player-selection').classList.remove('hidden');
+        }
+
+        function selectPlayerFromMath(id) {
+            playSFX('click');
+            activePlayerId = id;
+            screenMath.classList.add('hidden');
+            setupQuestionPhase();
+        }
+
+        // TELA 3: PERGUNTAS
+        function setupQuestionPhase() {
+            screenQuestion.classList.remove('hidden');
+            isAnswering = false;
+            eliminatedOptions = [];
+            
+            const activePlayer = players.find(p => p.id === activePlayerId);
+            const currentQ = gameQuestions[currentQuestionIndex];
+
+            document.getElementById('active-player-name').innerText = activePlayer.name;
+            document.getElementById('active-player-avatar').innerText = activePlayer.name.charAt(0).toUpperCase();
+            document.getElementById('current-prize').innerText = prizeTiers[activePlayer.scoreIndex];
+            
+            const scoreboard = document.getElementById('scoreboard-container');
+            scoreboard.innerHTML = '';
+            if (numPlayers > 1) {
+                players.forEach(p => {
+                    let colorClass = p.id === activePlayerId ? 'text-yellow-400 border-b-2 border-yellow-400' : 'text-slate-400';
+                    if (!p.active) colorClass = 'text-red-500 line-through opacity-50';
+                    else if (p.stopped) colorClass = 'text-yellow-600 opacity-70';
+                    
+                    scoreboard.innerHTML += `
+                        <div class="text-xs md:text-sm font-bold pb-1 ${colorClass}">
+                            ${p.name.substring(0, 10)}: ${prizeTiers[p.scoreIndex].replace(' Saberes', '')}
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('question-number').innerText = `Pergunta ${currentQuestionIndex + 1} (Nível ${currentQ.difficulty})`;
+            document.getElementById('question-text').innerText = currentQ.text;
+            
+            document.getElementById('hint-box').classList.add('hidden');
+            document.getElementById('hint-text').innerText = currentQ.hint;
+
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.className = "option-btn option-normal p-4 md:p-6 rounded-xl border-2 flex items-center gap-4 text-left text-base md:text-lg w-full";
+                btn.disabled = false;
+                document.getElementById(`opt-text-${i}`).innerText = currentQ.options[i];
+            }
+
+            document.getElementById('next-action-container').classList.add('hidden');
+            document.getElementById('btn-parar').disabled = false;
+            document.getElementById('btn-parar').classList.remove('opacity-50', 'cursor-not-allowed');
+
+            updateLifelineButtons(activePlayer);
+            resetTimer();
+        }
+
+        // TIMER
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timer = 60;
+            updateTimerDisplay();
+            document.getElementById('timer-btn').innerHTML = '<i class="fas fa-play"></i>';
+        }
+
+        function toggleTimer() {
+            playSFX('click');
+            if (isAnswering) return; 
+
+            const btn = document.getElementById('timer-btn');
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+            } else {
+                btn.innerHTML = '<i class="fas fa-pause"></i>';
+                timerInterval = setInterval(() => {
+                    timer--;
+                    updateTimerDisplay();
+                    if (timer <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        btn.innerHTML = '<i class="fas fa-play"></i>';
+                        forceWrongAnswerTimeout();
+                    }
+                }, 1000);
+            }
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById('timer-display');
+            const icon = document.getElementById('timer-icon');
+            display.innerText = timer;
+            if (timer <= 10 && timerInterval) {
+                display.classList.add('text-red-500');
+                icon.classList.add('text-red-500', 'fa-beat');
+            } else {
+                display.classList.remove('text-red-500');
+                icon.classList.remove('text-red-500', 'fa-beat');
+            }
+        }
+
+        // MECÂNICA DE RESPOSTA
+        function handleOptionClick(selectedIndex) {
+            if (isAnswering || eliminatedOptions.includes(selectedIndex)) return;
+            isAnswering = true;
+            
+            playSFX('click'); // Som IMEDIATO ao clicar na alternativa
+
+            clearInterval(timerInterval); 
+            document.getElementById('timer-btn').innerHTML = '<i class="fas fa-play"></i>';
+            document.getElementById('btn-parar').disabled = true;
+            document.getElementById('btn-parar').classList.add('opacity-50', 'cursor-not-allowed');
+
+            for(let i=0; i<4; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.disabled = true; 
+                if (i === selectedIndex) {
+                    btn.classList.replace('option-normal', 'option-selected');
+                } else if (!eliminatedOptions.includes(i)) {
+                    btn.classList.add('opacity-50'); 
+                }
+            }
+
+            // Suspense de 2.5s antes de revelar
+            setTimeout(() => {
+                revealResult(selectedIndex);
+            }, 2500);
+        }
+
+        function revealResult(selectedIndex) {
+            const currentQ = gameQuestions[currentQuestionIndex];
+            const correctIndex = currentQ.correct;
+            const isCorrect = selectedIndex === correctIndex;
+
+            // Toca efeito correspondente na revelação
+            if (isCorrect) {
+                playSFX('correct');
+            } else {
+                playSFX('wrong');
+            }
+
+            document.getElementById(`opt-${correctIndex}`).classList.remove('option-selected', 'opacity-50', 'option-normal');
+            document.getElementById(`opt-${correctIndex}`).classList.add('option-correct');
+
+            if (!isCorrect && selectedIndex !== -1) {
+                document.getElementById(`opt-${selectedIndex}`).classList.remove('option-selected');
+                document.getElementById(`opt-${selectedIndex}`).classList.add('option-wrong');
+            }
+
+            let activePlayer = players.find(p => p.id === activePlayerId);
+            if (isCorrect) {
+                activePlayer.scoreIndex += 1;
+            } else {
+                activePlayer.active = false;
+                activePlayer.scoreIndex = activePlayer.scoreIndex > 0 ? activePlayer.scoreIndex - 1 : 0;
+            }
+
+            setTimeout(() => {
+                document.getElementById('next-action-container').classList.remove('hidden');
+            }, 1000);
+        }
+
+        function forceWrongAnswerTimeout() {
+            if(isAnswering) return;
+            isAnswering = true;
+            document.getElementById('btn-parar').disabled = true;
+            revealResult(-1); 
+        }
+
+        function handleParar() {
+            playSFX('click');
+            if (isAnswering) return;
+            let activePlayer = players.find(p => p.id === activePlayerId);
+            activePlayer.stopped = true;
+            nextTurn();
+        }
+
+        function checkEndGame() {
+            const activeAndPlaying = players.filter(p => p.active && !p.stopped);
+            const someoneWon = players.some(p => p.scoreIndex >= 10);
+            
+            if (activeAndPlaying.length === 0 || someoneWon) {
+                playMusic('victory');
+                showEndScreen();
+                return true;
+            }
+            return false;
+        }
+
+        function nextTurn() {
+            playSFX('click');
+            if (checkEndGame()) return;
+
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= gameQuestions.length) {
+                playMusic('victory');
+                showEndScreen();
+                return;
+            }
+
+            if (numPlayers === 1) {
+                setupQuestionPhase();
+            } else {
+                generateMathProblem();
+            }
+        }
+
+        // CARTAS DE AJUDA
+        function updateLifelineButtons(player) {
+            const btnUni = document.getElementById('btn-uni');
+            const btnElim = document.getElementById('btn-elim');
+
+            if (player.lifelines.uni) {
+                btnUni.className = "flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border transition border-blue-500 bg-blue-900/20 hover:bg-blue-900/40 text-blue-400";
+                btnUni.disabled = false;
+            } else {
+                btnUni.className = "flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-600 opacity-50 cursor-not-allowed";
+                btnUni.disabled = true;
+            }
+
+            if (player.lifelines.elim) {
+                btnElim.className = "flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border transition border-red-500 bg-red-900/20 hover:bg-red-900/40 text-red-400";
+                btnElim.disabled = false;
+            } else {
+                btnElim.className = "flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-600 opacity-50 cursor-not-allowed";
+                btnElim.disabled = true;
+            }
+        }
+
+        function useUniversitario() {
+            playSFX('click');
+            if (isAnswering) return;
+            let p = players.find(pl => pl.id === activePlayerId);
+            if (!p.lifelines.uni) return;
+            p.lifelines.uni = false;
+            updateLifelineButtons(p);
+            document.getElementById('hint-box').classList.remove('hidden');
+        }
+
+        function useEliminar() {
+            playSFX('click');
+            if (isAnswering) return;
+            let p = players.find(pl => pl.id === activePlayerId);
+            if (!p.lifelines.elim) return;
+            p.lifelines.elim = false;
+            updateLifelineButtons(p);
+            
+            const modal = document.getElementById('modal-eliminar');
+            const container = document.getElementById('eliminar-cards-container');
+            modal.classList.remove('hidden');
+            
+            const values = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+            container.innerHTML = '';
+            
+            values.forEach((val, idx) => {
+                container.innerHTML += `
+                    <div class="flip-card w-24 h-36 md:w-32 md:h-48 cursor-pointer" onclick="flipEliminarCard(this, ${val})">
+                        <div class="flip-card-inner shadow-lg">
+                            <div class="flip-card-front bg-gradient-to-br from-red-600 to-red-900 border-2 border-red-400 text-4xl text-red-300 opacity-80">
+                                ?
+                            </div>
+                            <div class="flip-card-back bg-slate-200 border-2 border-white text-5xl md:text-6xl font-black text-red-600">
+                                ${val}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        let isCardFlipped = false;
+        function flipEliminarCard(cardElement, numToEliminate) {
+            if (isCardFlipped) return; 
+            playSFX('click');
+            isCardFlipped = true;
+            
+            cardElement.classList.add('flipped');
+            
+            setTimeout(() => {
+                applyElimination(numToEliminate);
+                document.getElementById('modal-eliminar').classList.add('hidden');
+                isCardFlipped = false;
+            }, 2000);
+        }
+
+        function applyElimination(numToEliminate) {
+            const currentQ = gameQuestions[currentQuestionIndex];
+            const wrongOptions = [0, 1, 2, 3].filter(i => i !== currentQ.correct);
+            
+            const toEliminate = wrongOptions.sort(() => Math.random() - 0.5).slice(0, numToEliminate);
+            eliminatedOptions = toEliminate;
+
+            toEliminate.forEach(idx => {
+                const btn = document.getElementById(`opt-${idx}`);
+                btn.classList.replace('option-normal', 'option-eliminated');
+                btn.disabled = true;
+            });
+        }
+
+        // TELA 4: RANKING FINAL
+        function showEndScreen() {
+            screenMath.classList.add('hidden');
+            screenQuestion.classList.add('hidden');
+            screenEnd.classList.remove('hidden');
+            playMusic('victory');
+
+            const container = document.getElementById('ranking-container');
+            const winnerMessage = document.getElementById('winner-message-container');
+            
+            container.innerHTML = '';
+            winnerMessage.innerHTML = '';
+
+            const sortedPlayers = [...players].sort((a, b) => b.scoreIndex - a.scoreIndex);
+
+            // Mensagem Especial de Parabéns
+            if (sortedPlayers.length > 0) {
+                const winner = sortedPlayers[0];
+                if (winner.scoreIndex > 0) {
+                    winnerMessage.innerHTML = `
+                        <h3 class="text-xl md:text-2xl text-emerald-400 font-medium mb-2 border border-emerald-500/30 bg-emerald-900/20 p-4 rounded-xl shadow-lg">
+                            <i class="fas fa-star text-yellow-400 mr-2"></i> Parabéns, <strong>${winner.name}</strong>! Você provou seu valor e acumulou mais saberes na jornada da Filosofia!
+                        </h3>
+                    `;
+                } else {
+                    winnerMessage.innerHTML = `<h3 class="text-xl text-slate-400 mb-2">A sabedoria requer persistência. Tentem novamente!</h3>`;
+                }
+            }
+
+            sortedPlayers.forEach((p, idx) => {
+                const isWinner = idx === 0 && p.scoreIndex > 0;
+                let statusText = p.scoreIndex >= 10 ? 'Sabedoria Infinita' : (!p.active ? 'Eliminado' : p.stopped ? 'Parou' : 'Sobrevivente');
+                
+                const cardClass = isWinner 
+                    ? 'bg-yellow-900/30 border-yellow-500 text-yellow-400 transform scale-105 shadow-lg border-2' 
+                    : 'bg-slate-900 border-slate-700 text-slate-300 border';
+
+                container.innerHTML += `
+                    <div class="flex items-center p-4 rounded-xl ${cardClass}">
+                        <div class="text-3xl font-black w-12 opacity-50">#${idx + 1}</div>
+                        <div class="flex-grow">
+                            <div class="text-xl md:text-2xl font-bold">${p.name}</div>
+                            <div class="text-sm opacity-70">${statusText}</div>
+                        </div>
+                        <div class="text-lg md:text-2xl font-mono font-bold text-right">
+                            ${prizeTiers[p.scoreIndex]}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
