@@ -3,248 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desafio da Termoquímica - Offline</title>
+    <title>O Caminho do Alquimista Master</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --exo: #e67e22; /* Laranja para Exotérmica */
-            --endo: #9b59b6; /* Roxo para Endotérmica */
-            --success: #27ae60;
-            --error: #e74c3c;
-            --bg: #f4f7f6;
+            --primary: #2d3436;
+            --secondary: #6c5ce7;
+            --accent: #fdcb6e;
+            --bg: #2c3e50; /* Cor de fundo alterada */
+            --text: #ffffff;
+            --correct: #27ae60;
+            --wrong: #c0392b;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg);
-            margin: 0;
+            color: var(--text);
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             min-height: 100vh;
+            margin: 0;
         }
 
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            width: 100%;
-            text-align: center;
-            padding: 1.5rem 0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .container {
+        #game-container {
+            background: #34495e;
+            padding: 2.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
             width: 90%;
-            max-width: 500px;
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            margin: 20px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-
-        .box {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            border-left: 5px solid var(--secondary);
-            margin-bottom: 20px;
-        }
-
-        .equation { font-size: 1.1rem; text-align: center; line-height: 3; }
-        .question { font-weight: bold; margin-bottom: 15px; display: block; }
-
-        input {
-            width: 45px;
-            height: 35px;
+            max-width: 700px;
             text-align: center;
-            font-size: 1rem;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            margin: 0 3px;
         }
 
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
+        .phase-badge {
+            display: inline-block;
+            background: var(--secondary);
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
         }
 
-        .opt-btn {
-            background: white;
-            border: 2px solid var(--secondary);
-            padding: 12px;
+        .visual-box {
+            background: #1e272e;
+            padding: 20px;
             border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            border-left: 6px solid var(--accent);
+            line-height: 1.6;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+
+        /* Fonte do enunciado maior conforme solicitado */
+        .question { 
+            font-size: 1.6rem; 
+            margin-bottom: 25px; 
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .options-grid { display: grid; gap: 14px; }
+
+        button.option {
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: white;
             cursor: pointer;
             transition: 0.3s;
             text-align: left;
+            font-size: 1.1rem;
         }
 
-        .opt-btn:hover { background: #ebf5fb; }
-
-        .main-btn {
-            width: 100%;
-            padding: 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+        button.option:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
         }
 
-        #feedback {
+        #score-screen { display: none; text-align: left; }
+        
+        .progress-bar {
+            height: 12px;
+            background: #1e272e;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: 0.5s;
+        }
+
+        .rank-master {
+            color: var(--accent);
+            text-shadow: 0 0 15px rgba(253, 203, 110, 0.5);
+            font-size: 2.5rem;
+            margin: 20px 0;
             text-align: center;
-            margin-top: 20px;
             font-weight: bold;
-            min-height: 1.5rem;
         }
 
-        .correct { border-color: var(--success); background: #d4edda; }
-        .wrong { border-color: var(--error); background: #f8d7da; }
-        sub { font-size: 0.75rem; }
+        .report-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .report-correct { background: rgba(39, 174, 96, 0.15); border: 1px solid var(--correct); }
+        .report-wrong { background: rgba(192, 57, 43, 0.15); border: 1px solid var(--wrong); }
+
+        .btn-revised {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Termoquímica Master</h1>
-    <p>Balanceamento & Energia</p>
-</header>
-
-<div class="container" id="game-container">
-    <div class="status-bar">
-        <span>Fase: <span id="lvl">1</span>/8</span>
-        <span>Pontos: <span id="pts">0</span></span>
+<div id="game-container">
+    <div id="quiz-section">
+        <div id="phase-label" class="phase-badge">FASE 1</div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <div id="visual-area" class="visual-box"></div>
+        <div class="question" id="question-text">Carregando...</div>
+        <div class="options-grid" id="options-container"></div>
     </div>
 
-    <div id="content">
-        </div>
+    <div id="score-screen">
+        <h2 style="text-align: center;">Relatório do Alquimista</h2>
+        <div id="master-rank"></div>
+        <p style="text-align: center; font-size: 1.3rem;">Você dominou <span id="final-score">0</span> de <span id="total-questions">0</span> fórmulas!</p>
+        
+        <div id="report-container" style="margin-top: 25px;"></div>
 
-    <div id="feedback"></div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="location.reload()" style="padding: 12px 25px; cursor:pointer; background: var(--secondary); color: white; border: none; border-radius: 8px; font-size: 1rem;">Reiniciar Jornada</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    const challenges = [
+    const questions = [
         {
-            type: "balance",
-            eq: '<input id="i1"> H<sub>2</sub> + <input id="i2"> O<sub>2</sub> → <input id="i3"> H<sub>2</sub>O',
-            ans: ["2", "1", "2"],
-            msg: "Balanceie a formação da água!"
+            phase: "FASE 1: O Equilíbrio das Equações",
+            visual: "Al<sub>(s)</sub> + Cl<sub>2(g)</sub> → AlCl<sub>3(s)</sub><br>[ ? ] Al + [ 3 ] Cl₂ → [ 2 ] AlCl₃",
+            q: "Qual o coeficiente que falta para equilibrar esta reação?",
+            options: ["1", "2", "3", "4"],
+            correct: 1
         },
         {
-            type: "quiz",
-            q: "Se uma reação libera calor para o ambiente e o recipiente esquenta, ela é:",
-            opts: ["Exotérmica", "Endotérmica", "Isotérmica"],
-            ans: 0,
-            note: "Dica: 'Exo' significa para fora."
+            phase: "FASE 1: O Equilíbrio das Equações",
+            visual: "🔥 COMBUSTÃO DO METANO:<br>_ CH₄ + _ O₂ → _ CO₂ + _ H₂O",
+            q: "Selecione os coeficientes que balanceiam a reação corretamente:",
+            options: ["1, 1, 1, 1", "1, 2, 1, 2", "2, 1, 2, 1", "1, 2, 2, 1"],
+            correct: 1
         },
         {
-            type: "balance",
-            eq: '<input id="i1"> C<sub>3</sub>H<sub>8</sub> + <input id="i2"> O<sub>2</sub> → <input id="i3"> CO<sub>2</sub> + <input id="i4"> H<sub>2</sub>O',
-            ans: ["1", "5", "3", "4"],
-            msg: "Balanceie a combustão do propano."
+            phase: "FASE 1: O Equilíbrio das Equações",
+            visual: "C₃H₈ + 5 O₂ → 3 CO₂ + [ ? ] H₂O",
+            q: "Qual o coeficiente da água no balanceamento acima?",
+            options: ["2", "3", "4", "5"],
+            correct: 2
         },
         {
-            type: "quiz",
-            q: "Na reação: N<sub>2</sub> + O<sub>2</sub> → 2 NO  (ΔH = +180 kJ). Esta reação é:",
-            opts: ["Exotérmica (libera energia)", "Endotérmica (absorve energia)"],
-            ans: 1,
-            note: "Dica: Observe o sinal do ΔH!"
+            phase: "FASE 2: Termoquímica no Cotidiano",
+            visual: "🔥 SITUAÇÃO: Um maçarico libera calor intenso ao queimar acetileno.",
+            q: "Essa liberação de calor caracteriza uma reação:",
+            options: ["Endotérmica", "Exotérmica", "Isotérmica", "Anabólica"],
+            correct: 1
         },
         {
-            type: "balance",
-            eq: '<input id="i1"> Al + <input id="i2"> HCl → <input id="i3"> AlCl<sub>3</sub> + <input id="i4"> H<sub>2</sub>',
-            ans: ["2", "6", "2", "3"],
-            msg: "Desafio: Metais e Ácidos!"
+            phase: "FASE 2: Termoquímica no Cotidiano",
+            visual: "❄️ SITUAÇÃO: Gelo seco sublimando e absorvendo calor do meio.",
+            q: "Esse processo de absorção é:",
+            options: ["Exotérmico", "Explosivo", "Endotérmico", "Combustão"],
+            correct: 2
         },
         {
-            type: "quiz",
-            q: "O que acontece com a entalpia (H) em uma reação exotérmica?",
-            opts: ["H dos produtos é maior que a dos reagentes", "H dos reagentes é maior que a dos produtos", "A entalpia não muda"],
-            ans: 1,
-            note: "Se liberou energia, o produto final tem menos energia que o início."
+            phase: "FASE 3: Misturas e Soluções",
+            visual: "🧪 RECIPIENTE:<br>[ 💧 500ml de Água ]<br>[ 🧂 20g de Sal ]",
+            q: "Quem é o SOLUTO nesta mistura?",
+            options: ["A Água", "O Sal de Cozinha", "O Recipiente", "O vapor"],
+            correct: 1
         },
         {
-            type: "balance",
-            eq: '<input id="i1"> C<sub>2</sub>H<sub>5</sub>OH + <input id="i2"> O<sub>2</sub> → <input id="i3"> CO<sub>2</sub> + <input id="i4"> H<sub>2</sub>O',
-            ans: ["1", "3", "2", "3"],
-            msg: "Balanceie a combustão do Etanol!"
+            phase: "FASE 3: Misturas e Soluções",
+            visual: "📏 UNIDADES:<br>Volume necessário: 0,8 Litros.",
+            q: "Quanto esse valor representa em mililitros (mL)?",
+            options: ["80 mL", "800 mL", "8000 mL", "8 mL"],
+            correct: 1
         },
         {
-            type: "quiz",
-            q: "O uso de um catalisador em uma reação química:",
-            opts: ["Aumenta o ΔH da reação", "Diminui a energia de ativação", "Torna a reação endotérmica"],
-            ans: 1,
-            note: "Catalisadores são atalhos!"
+            phase: "FASE 4: Cálculos de Mestre",
+            visual: "⚖️ MASSA MOLAR:<br>H₂SO₄ (H=1, S=32, O=16)",
+            q: "Qual a massa molar total desta molécula?",
+            options: ["49 g/mol", "98 g/mol", "100 g/mol", "82 g/mol"],
+            correct: 1
+        },
+        {
+            phase: "FASE 4: Cálculos de Mestre",
+            visual: "🧪 CONCENTRAÇÃO:<br>m = 50g | V = 250 mL<br>C = m / V (L)",
+            q: "Qual a concentração comum em g/L?",
+            options: ["200 g/L", "12,5 g/L", "20 g/L", "0,2 g/L"],
+            correct: 0
+        },
+        {
+            phase: "FASE 4: Cálculos de Mestre",
+            visual: "⚖️ UNIDADES DE MASSA:<br>Um reagente pesa 500mg.",
+            q: "Converta esse valor para Gramas (g):",
+            options: ["5g", "0,5g", "0,05g", "50g"],
+            correct: 1
         }
     ];
 
-    let step = 0;
+    let currentQuestion = 0;
     let score = 0;
+    let userAnswers = new Array(questions.length).fill(null);
+    let isReviewing = false;
 
-    function render() {
-        const item = challenges[step];
-        const display = document.getElementById('content');
-        document.getElementById('lvl').innerText = step + 1;
-        document.getElementById('feedback').innerText = "";
+    function loadQuestion(index) {
+        currentQuestion = index;
+        const qData = questions[currentQuestion];
+        
+        document.getElementById('quiz-section').style.display = 'block';
+        document.getElementById('score-screen').style.display = 'none';
 
-        if(item.type === "balance") {
-            display.innerHTML = `<span class="question">${item.msg}</span><div class="box equation">${item.eq}</div><button class="main-btn" onclick="checkBalance()">Verificar</button>`;
-        } else {
-            let htmlOpts = item.opts.map((o, i) => `<button class="opt-btn" onclick="checkQuiz(${i})">${o}</button>`).join('');
-            display.innerHTML = `<span class="question">${item.q}</span><div class="options-grid">${htmlOpts}</div>`;
-        }
-    }
-
-    function checkBalance() {
-        const item = challenges[step];
-        let correct = true;
-        item.ans.forEach((a, i) => {
-            const val = document.getElementById(`i${i+1}`).value.trim();
-            if(val !== a) correct = false;
+        document.getElementById('phase-label').innerText = qData.phase;
+        document.getElementById('visual-area').innerHTML = qData.visual;
+        document.getElementById('question-text').innerText = qData.q;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        qData.options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option';
+            btn.innerText = opt;
+            btn.onclick = () => handleAnswer(i);
+            container.appendChild(btn);
         });
-        showResult(correct);
+
+        document.getElementById('progress-fill').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
     }
 
-    function checkQuiz(idx) {
-        showResult(idx === challenges[step].ans);
-    }
+    function handleAnswer(selectedIndex) {
+        const correctIndex = questions[currentQuestion].correct;
+        const isCorrect = (selectedIndex === correctIndex);
+        
+        userAnswers[currentQuestion] = {
+            isCorrect: isCorrect,
+            correctText: questions[currentQuestion].options[correctIndex]
+        };
 
-    function showResult(win) {
-        const f = document.getElementById('feedback');
-        if(win) {
-            f.innerText = "Correto! +100 pontos"; 
-            f.style.color = "var(--success)";
-            score += 100;
-            document.getElementById('pts').innerText = score;
-            setTimeout(next, 1200);
+        if(isReviewing) {
+            isReviewing = false;
+            showResults();
         } else {
-            f.innerText = "Tente novamente! Analise com calma.";
-            f.style.color = "var(--error)";
+            if(currentQuestion + 1 < questions.length) {
+                loadQuestion(currentQuestion + 1);
+            } else {
+                showResults();
+            }
         }
     }
 
-    function next() {
-        step++;
-        if(step < challenges.length) render();
-        else {
-            document.getElementById('game-container').innerHTML = `<div style="text-align:center"><h2>🏆 Alquimista Supremo!</h2><p>Você completou o desafio com ${score} pontos.</p><button class="main-btn" onclick="location.reload()">Reiniciar</button></div>`;
+    function showResults() {
+        // Calcular score real
+        score = userAnswers.filter(a => a && a.isCorrect).length;
+
+        document.getElementById('quiz-section').style.display = 'none';
+        document.getElementById('score-screen').style.display = 'block';
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('total-questions').innerText = questions.length;
+
+        const rankDiv = document.getElementById('master-rank');
+        const reportContainer = document.getElementById('report-container');
+        reportContainer.innerHTML = '';
+
+        if(score === questions.length) {
+            rankDiv.innerHTML = "<div class='rank-master'>✨ ALQUIMISTA MASTER ✨</div>";
+        } else {
+            rankDiv.innerHTML = "<h3 style='text-align:center'>Relatório de Laboratório</h3>";
         }
+
+        userAnswers.forEach((ans, index) => {
+            const div = document.createElement('div');
+            div.className = `report-item ${ans.isCorrect ? 'report-correct' : 'report-wrong'}`;
+            
+            let content = `<div><strong>${index + 1}.</strong> ${ans.isCorrect ? '✅ Correto' : '❌ Errou'}</div>`;
+            
+            if(!ans.isCorrect) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-revised';
+                btn.innerText = 'REVISAR QUESTÃO';
+                btn.onclick = () => {
+                    isReviewing = true;
+                    loadQuestion(index);
+                };
+                div.innerHTML = content;
+                div.appendChild(btn);
+            } else {
+                div.innerHTML = content;
+            }
+            
+            reportContainer.appendChild(div);
+        });
     }
 
-    render();
+    loadQuestion(0);
 </script>
 </body>
 </html>
