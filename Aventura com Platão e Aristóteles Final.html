@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventuras com Platão e Aristóteles</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    
+    <!-- Tone.js para os efeitos sonoros -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            overflow-x: hidden;
+        }
+        
+        .font-serif-title {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Animações */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Palavras do Códex */
+        .codex-term {
+            color: #fbbf24; /* Amber 400 */
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .codex-term:hover {
+            color: #f59e0b; /* Amber 500 */
+        }
+
+        /* Barras de Progresso Customizadas */
+        .progress-plato { transition: width 0.5s ease-in-out; background-color: #3b82f6; } /* Blue 500 */
+        .progress-aristotle { transition: width 0.5s ease-in-out; background-color: #10b981; } /* Emerald 500 */
+
+        /* Adicionando brilho aos ícones da cena */
+        .scene-icon-bright {
+            color: #f1f5f9; /* slate-100 */
+            filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.4)); /* Brilho dourado suave */
+            opacity: 1 !important;
+        }
+
+        /* Scrollbar customizada para os modais */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Música de Fundo (Ajustada) -->
+    <audio id="bg-music" loop preload="auto" src="https://cdn.pixabay.com/audio/2026/01/18/audio_6136a1f191.mp3" crossorigin="anonymous"></audio>
+
+    <!-- TELA INICIAL -->
+    <div id="screen-start" class="max-w-2xl w-full bg-slate-800 rounded-2xl shadow-2xl p-8 text-center border border-slate-700 fade-in">
+        <div class="mb-6">
+            <i class="fas fa-landmark text-6xl text-amber-400 mb-4"></i>
+            <h1 class="text-4xl md:text-5xl font-serif-title text-white mb-2">O Grande Debate de Atenas</h1>
+            <p class="text-slate-400 text-lg">Aventuras com Platão e Aristóteles</p>
+        </div>
+        
+        <div class="bg-slate-700/50 p-6 rounded-xl text-left mb-8">
+            <h2 class="text-xl font-semibold mb-2 text-amber-300"><i class="fas fa-scroll mr-2"></i>Sua Missão:</h2>
+            <p class="text-slate-300 mb-4">Você é um estudante que adormeceu estudando para a prova de Filosofia e acordou na Grécia Antiga! Para voltar ao presente, você deve ajudar cidadãos resolvendo dilemas práticos usando os conceitos de Platão e Aristóteles.</p>
+            <ul class="list-disc list-inside text-sm text-slate-400 space-y-1">
+                <li>Leia a história e tome decisões.</li>
+                <li>Clique nas palavras em <span class="text-amber-400 font-bold">dourado</span> para abrir o Glossário.</li>
+                <li>Siga a Razão Idealista (Platão) ou a Lógica Prática (Aristóteles).</li>
+            </ul>
+        </div>
+
+        <button onclick="startGame()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xl py-4 px-8 rounded-xl transition transform hover:scale-105 active:scale-95 shadow-lg">
+            <i class="fas fa-play mr-2"></i> Iniciar Jornada
+        </button>
+    </div>
+
+    <!-- TELA DO JOGO -->
+    <div id="screen-game" class="max-w-3xl w-full hidden flex flex-col h-[90vh] fade-in">
+        
+        <!-- Top Bar (HUD) -->
+        <div class="bg-slate-800 rounded-t-2xl p-4 border-b border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
+            <div class="flex items-center gap-2">
+                <button onclick="showCodexMenu()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition text-amber-400 border border-slate-600">
+                    <i class="fas fa-book-open mr-2"></i>Códex
+                </button>
+                <button onclick="toggleFullscreen()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-200 border border-slate-600" title="Tela Cheia">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+            
+            <!-- Balança Filosófica -->
+            <div class="flex-1 w-full md:max-w-md px-4">
+                <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wider">
+                    <span class="text-blue-400"><i class="fas fa-cloud text-xs mr-1"></i> Platão (<span id="score-plato">0</span>)</span>
+                    <span class="text-emerald-400">Aristóteles (<span id="score-ari">0</span>) <i class="fas fa-seedling text-xs ml-1"></i></span>
+                </div>
+                <div class="h-3 w-full bg-slate-700 rounded-full overflow-hidden flex">
+                    <div id="bar-plato" class="progress-plato h-full" style="width: 50%;"></div>
+                    <div id="bar-ari" class="progress-aristotle h-full" style="width: 50%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área de Narrativa -->
+        <div class="flex-1 bg-slate-900 border-x border-slate-700 overflow-y-auto p-6 relative flex flex-col" id="narrative-area">
+            
+            <!-- Visualização da Cena/Personagem -->
+            <div id="scene-image-container" class="w-full h-48 md:h-64 rounded-xl bg-slate-800 border border-slate-700 mb-6 flex items-center justify-center relative overflow-hidden shrink-0 shadow-inner transition-all duration-500 bg-cover bg-center">
+                <div class="absolute bottom-4 right-4 bg-slate-900/80 px-3 py-1 rounded-full text-xs font-semibold text-slate-300 border border-slate-600 backdrop-blur-sm">
+                    <i class="fas fa-map-marker-alt mr-1 text-amber-400"></i> <span id="scene-location">Ágora de Atenas</span>
+                </div>
+            </div>
+
+            <!-- Diálogo -->
+            <div class="bg-slate-800 border border-slate-600 rounded-xl p-6 relative shadow-lg slide-up mb-4 flex-1">
+                <div class="absolute -top-4 left-6 bg-amber-500 text-slate-900 font-bold px-4 py-1 rounded-full text-sm shadow-md" id="speaker-name">
+                    Narrador
+                </div>
+                <div class="text-slate-200 text-lg leading-relaxed mt-2" id="dialogue-text">
+                    Carregando história...
+                </div>
+            </div>
+        </div>
+
+        <!-- Área de Escolhas -->
+        <div class="bg-slate-800 rounded-b-2xl p-4 border-t border-slate-700 shrink-0">
+            <div id="choices-container" class="flex flex-col gap-3">
+                <!-- Botões de escolha injetados via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE FEEDBACK (Certo/Errado Pedagógico) -->
+    <div id="modal-feedback" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 rounded-2xl max-w-lg w-full border border-slate-600 shadow-2xl overflow-hidden slide-up">
+            <div id="feedback-header" class="p-4 bg-blue-600 text-white font-bold text-xl flex items-center">
+                <i id="feedback-icon" class="fas fa-info-circle mr-3 text-2xl"></i>
+                <span id="feedback-title">Análise Filosófica</span>
+            </div>
+            <div class="p-6 text-slate-200 text-lg leading-relaxed" id="feedback-text">
+                Mensagem de feedback.
+            </div>
+            <div class="p-4 border-t border-slate-700 text-right bg-slate-850">
+                <button onclick="closeFeedbackModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded-lg transition">
+                    Continuar <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DO CÓDEX (Glossário) -->
+    <div id="modal-codex" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 rounded-2xl max-w-xl w-full border border-amber-500/50 shadow-2xl overflow-hidden slide-up max-h-[80vh] flex flex-col">
+            <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-700 border-b border-amber-500/30 flex justify-between items-center shrink-0">
+                <h2 class="text-amber-400 font-serif-title font-bold text-2xl"><i class="fas fa-book mr-2"></i> Códex Filosófico</h2>
+                <button onclick="closeCodexModal()" class="text-slate-400 hover:text-white transition p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto" id="codex-content">
+                <!-- Conteúdo do códex injetado via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DADOS DO CÓDEX (Baseado nos PDFs) ---
+        const codexData = {
+            "Mundo Sensível": "Aquele que percebemos pelos sentidos (visão, tato). É mutável, corruptível e passageiro. Para Platão, é o mundo das aparências (as sombras da caverna).",
+            "Mundo das Formas": "Também chamado de Mundo Inteligível. Acessado apenas pela razão. É eterno, imutável e perfeito. Contém os 'moldes' ou Ideias perfeitas de tudo que existe (ex: Forma da Justiça).",
+            "Mundo Inteligível": "Também chamado de Mundo Inteligível. Acessado apenas pela razão. É eterno, imutável e perfeito. Contém os 'moldes' ou Ideias perfeitas de tudo que existe (ex: Forma da Justiça).",
+            "Reminiscência": "Teoria de Platão (Recordação). A alma imortal já viveu no Mundo das Formas e conhece tudo. Ao nascer, ela 'esquece'. Conhecer e aprender é, na verdade, 'relembrar' o que a alma já sabia.",
+            "Alegoria da Caverna": "Metáfora de Platão (A República, Livro VII). Prisioneiros veem sombras na parede achando ser a realidade (Mundo Sensível). Sair da caverna e ver o Sol representa alcançar o conhecimento verdadeiro (Mundo Inteligível).",
+            "A República": "Obra de Platão. Propõe uma cidade justa dividida em 3 classes baseadas na alma: Governantes (Racional/Filósofos), Guardiões (Irascível/Soldados) e Produtores (Concupiscente/Trabalhadores).",
+            "Metafísica": "Aristóteles chamava de 'filosofia primeira'. É o estudo do 'ser enquanto ser', investigando as causas e princípios mais fundamentais de tudo o que existe na realidade.",
+            "Causa Material": "Uma das 4 Causas de Aristóteles. Responde: Do que a coisa é feita? Exemplo: O mármore de uma escultura ou os ingredientes de um bolo.",
+            "Causa Formal": "Uma das 4 Causas de Aristóteles. Responde: Qual a forma ou estrutura? Exemplo: O formato do herói esculpido no mármore ou a receita do bolo.",
+            "Causa Eficiente": "Uma das 4 Causas de Aristóteles. Responde: Quem ou o que produziu a coisa? Exemplo: O escultor da estátua ou o confeiteiro.",
+            "Causa Final": "Uma das 4 Causas de Aristóteles. Responde: Qual o propósito ou função? Exemplo: Enfeitar o jardim (estátua) ou comemorar um aniversário (bolo).",
+            "Substância": "Para Aristóteles, é a essência do ser, aquilo que existe por si mesmo e o faz ser o que é. Ex: Um cavalo.",
+            "Acidente": "Para Aristóteles, é a característica que não faz parte da essência e pode mudar sem alterar o ser. Ex: A cor do cavalo, ou se ele está correndo.",
+            "Ato": "Para Aristóteles, é a realização presente de uma possibilidade. A realidade atual. Ex: Uma árvore crescida.",
+            "Potência": "Para Aristóteles, é a possibilidade de vir a ser algo. Ex: A semente tem a potência de ser árvore.",
+            "Motor Imóvel": "Para Aristóteles, tudo que se move é movido por algo. Para evitar o infinito, deve haver uma causa primeira: O Motor Imóvel (Deus), que move tudo sem ser movido e é 'ato puro'.",
+            "Ética do Meio-Termo": "Ideia de Aristóteles de que a virtude é o ponto de equilíbrio entre dois extremos ruins (excesso e falta). Ex: Coragem é o meio-termo entre Covardia (falta) e Temeridade (excesso).",
+            "Eudaimonia": "A Felicidade para Aristóteles. Não é alegria passageira, mas uma vida plena e bem vivida, alcançada pelo desenvolvimento da razão e prática do meio-termo (virtude)."
+        };
+
+        // --- ESTADO DO JOGO ---
+        let state = {
+            currentNode: 'intro_1',
+            platoScore: 0,
+            aristotleScore: 0,
+            codexUnlocked: new Set(),
+            pendingNextNode: null // Usado para pausar o jogo enquanto o modal de feedback está aberto
+        };
+
+        const img_biblioteca = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Biblioteca_Moderna.png";
+        const img_agora = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Agora_de_Atenas.png";
+        const img_caverna = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Caverna_de_Platao.png";
+        const img_academia = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Academia_de_Platao.png";
+        const img_liceu = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Liceu_de_Aristoteles.png";
+        const img_debate = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/O_Grande_Debate.png";
+        const img_platao_ideias = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Platao_Explicando_Mundo.png";
+        const img_platao_triste = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Platao_Triste_na_Caverna.png";
+        const img_ari_causas = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Aristoteles_4Causas.png";
+        const img_ari_meiotermo = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Aristoteles_Explicando_MeioTermo.png";
+	const img_anel = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Mercador.png";
+	const img_soldado = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/young_soldier.png";
+        const img_triunfo = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Platao_Aristoteles_Amigos.png";
+
+        const storyData = {
+            // INTRODUÇÃO
+            intro_1: {
+                speaker: "Narrador",
+                location: "Biblioteca da Escola",
+                image: img_biblioteca,
+                text: "Você está na biblioteca da escola, revisando anotações intermináveis sobre filosofia antiga. A prova é amanhã. Seus olhos pesam. 'Substância, Mundo das Formas, Reminiscência... ah, não aguento mais', você murmura, antes de cair no sono em cima do caderno.",
+                choices: [
+                    { text: "🥱 Acordar...", nextId: "intro_2" }
+                ]
+            },
+            intro_2: {
+                speaker: "Narrador",
+                location: "Ágora de Atenas",
+                image: img_agora,
+                text: "O calor do sol bate no seu rosto. Barulho de mercado, cheiro de azeitonas e pão fresco. Você abre os olhos e não está mais na biblioteca. Você está vestido com uma túnica grega simples, no meio de uma praça colossal cercada de colunas de mármore.",
+                choices: [
+                    { text: "😲 Olhar em volta confuso.", nextId: "intro_3" }
+                ]
+            },
+            intro_3: {
+                speaker: "Cidadão",
+                location: "Ágora de Atenas",
+                image: img_agora,
+                text: "Cuidado aí, jovem! Está atrapalhando a passagem. Não vê que os dois grandes mestres estão debatendo ali na frente? Vá até lá se quiser aprender algo útil em vez de dormir na rua!",
+                choices: [
+                    { text: "🚶 Ir até onde os sábios estão reunidos.", nextId: "meet_philosophers" }
+                ]
+            },
+            meet_philosophers: {
+                speaker: "Narrador",
+                location: "Debate na Praça",
+                image: img_debate,
+                text: "Você vê dois homens no centro de uma roda. Um deles, mais velho e de ombros largos, aponta para o céu. O outro, mais jovem e bem vestido, aponta firmemente para o chão.",
+                choices: [
+                    { text: "☁️ Ouvir o que diz o homem que aponta para o céu.", nextId: "meet_plato" },
+                    { text: "🌱 Ouvir o que diz o homem que aponta para o chão.", nextId: "meet_aristotle" }
+                ]
+            },
+            meet_plato: {
+                speaker: "Platão",
+                location: "Debate na Praça",
+                image: img_platao_ideias,
+                text: "A verdadeira realidade não está nesta praça empoeirada! Tudo isso que tocamos pertence ao Mundo Sensível, é passageiro e imperfeito, como sombras na parede de uma caverna. A verdade está no Mundo Inteligível, o Mundo das Formas!",
+                choices: [
+                    { text: "👂 E o que diz o outro sábio?", nextId: "meet_aristotle_after" }
+                ]
+            },
+            meet_aristotle: {
+                speaker: "Aristóteles",
+                location: "Debate na Praça",
+                image: img_ari_causas,
+                text: "Com todo respeito, mestre Platão, se as Formas estão em 'outro mundo', de que servem para explicar este aqui? A Substância das coisas está nelas mesmas, o resto é apenas Acidente! Precisamos observar a natureza e usar a lógica prática.",
+                choices: [
+                    { text: "👂 E o que diz o outro sábio?", nextId: "meet_plato_after" }
+                ]
+            },
+            meet_plato_after: {
+                speaker: "Platão",
+                location: "Debate na Praça",
+                image: img_platao_ideias,
+                text: "A verdadeira realidade não está nesta praça empoeirada! Tudo isso que tocamos pertence ao Mundo Sensível, é passageiro e imperfeito, como sombras na parede de uma caverna. A verdade está no Mundo Inteligível, o Mundo das Formas!",
+                choices: [
+                    { text: "✋ Interromper os dois educadamente.", nextId: "intro_mission" }
+                ]
+            },
+            meet_aristotle_after: {
+                speaker: "Aristóteles",
+                location: "Debate na Praça",
+                image: img_ari_causas,
+                text: "Com todo respeito, mestre Platão, se as Formas estão em 'outro mundo', de que servem para explicar este aqui? A Substância das coisas está nelas mesmas, o resto é apenas Acidente! E lembre-se, tudo que muda é movido por um Motor Imóvel.",
+                choices: [
+                    { text: "✋ Interromper os dois educadamente.", nextId: "intro_mission" }
+                ]
+            },
+            intro_mission: {
+                speaker: "Platão e Aristóteles",
+                location: "Debate na Praça",
+                image: img_debate,
+                text: "Ah, um novo rosto! Você parece um forasteiro confuso... perfeito! Atenas está em crise. As pessoas não sabem como julgar a verdade. Nós dois estamos testando nossas filosofias na prática. Ajude-nos a resolver os problemas da cidade hoje. O que me diz?",
+                choices: [
+                    { text: "🤝 Aceitar o desafio (e torcer para isso ajudar na prova).", nextId: "quest1_intro" }
+                ]
+            },
+
+            // QUEST 1: PLATÃO (Teoria das Formas e Reminiscência)
+            quest1_intro: {
+                speaker: "Narrador",
+                location: "A Tenda do Mercador",
+                image: img_anel,
+                text: "Eles te levam até um mercador de joias que está discutindo com um cliente. O cliente acusa o mercador de vender um anel imperfeito. O mercador jura que é a 'perfeição em ouro'.",
+                choices: [
+                    { text: "🔍 Analisar a situação.", nextId: "quest1_plato" }
+                ]
+            },
+            quest1_plato: {
+                speaker: "Platão",
+                location: "A Tenda do Mercador",
+                image: img_anel,
+                text: "Meu jovem, observe o erro deles. O mercador chama um objeto de ouro de 'perfeito'. Lembre-se do que ensinei na minha Teoria das Formas. Onde reside a perfeição verdadeira?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 🏛️ A perfeição existe apenas no Mundo das Formas (Inteligível).", 
+                        nextId: "quest1_right", 
+                        isCorrect: true,
+                        points: { plato: 1 },
+                        feedbackTitle: "Resposta Correta!",
+                        feedbackText: "Exatamente! Segundo Platão, o <b>Mundo Sensível</b> (onde vivemos) contém apenas cópias mutáveis e imperfeitas. A perfeição (a 'Ideia de Anel') só existe no <b>Mundo das Formas</b>, que acessamos pela razão."
+                    },
+                    { 
+                        text: "[Avaliação] ✨ A perfeição pode ser encontrada no Mundo Sensível, basta polir bem.", 
+                        nextId: "quest1_wrong", 
+                        isCorrect: false,
+                        feedbackTitle: "Resposta Incorreta...",
+                        feedbackText: "Platão discorda! Ele defende que o <b>Mundo Sensível</b> (das coisas materiais) é mutável e corruptível. As coisas perfeitas e eternas só existem no <b>Mundo das Formas (Inteligível)</b>."
+                    }
+                ]
+            },
+            quest1_wrong: {
+                speaker: "Platão",
+                location: "A Tenda do Mercador",
+                image: img_platao_triste,
+                text: "Não, não! Você está se deixando enganar pelos sentidos, preso na Alegoria da Caverna. Veja, eu converso com o cliente e provo que, através de perguntas, ele no fundo já sabe o que é a verdadeira beleza.",
+                choices: [
+                    { text: "🤔 Escutar a explicação de Platão.", nextId: "quest1_reminiscence" }
+                ]
+            },
+            quest1_right: {
+                speaker: "Platão",
+                location: "A Tenda do Mercador",
+                image: img_caverna,
+                text: "Brilhante! Você não está preso nas sombras da Alegoria da Caverna. Para provar meu ponto, vou fazer perguntas ao cliente até que ele perceba que já sabe a resposta.",
+                choices: [
+                    { text: "🤔 Escutar a explicação de Platão.", nextId: "quest1_reminiscence" }
+                ]
+            },
+            quest1_reminiscence: {
+                speaker: "Aristóteles",
+                location: "A Tenda do Mercador",
+                image: img_academia,
+                text: "Lá vai Platão com suas histórias... Ele acha que quando aprendemos algo, não estamos adquirindo conhecimento novo, mas sim lembrando. Como ele chama isso mesmo?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 🧠 Teoria da Reminiscência (Recordação).", 
+                        nextId: "quest2_intro", 
+                        isCorrect: true,
+                        points: { plato: 1 },
+                        feedbackTitle: "Resposta Correta!",
+                        feedbackText: "Isso mesmo! A <b>Teoria da Reminiscência</b> diz que a alma é imortal e conheceu o Mundo das Formas. Ao nascer, ela 'esquece'. Logo, aprender é <b>relembrar</b>."
+                    },
+                    { 
+                        text: "[Avaliação] 🎨 Teoria da Criação Pura.", 
+                        nextId: "quest2_intro", 
+                        isCorrect: false,
+                        feedbackTitle: "Resposta Incorreta...",
+                        feedbackText: "Aristóteles balança a cabeça: 'Ele chama isso de <b>Teoria da Reminiscência</b> (Recordação). Platão acha que a alma já sabia tudo e só esqueceu ao nascer, e que aprender é relembrar.'"
+                    }
+                ]
+            },
+
+            // QUEST 2: ARISTÓTELES (As Quatro Causas, Ato/Potência)
+            quest2_intro: {
+                speaker: "Narrador",
+                location: "Oficina do Escultor",
+                image: img_ari_causas,
+                text: "Vocês deixam o mercador e entram na oficina de um artesão. Ele está olhando tristemente para um enorme bloco de mármore bruto, sem saber como começar sua encomenda.",
+                choices: [
+                    { text: "🛠️ Deixe-me ajudá-lo.", nextId: "quest2_ari1" }
+                ]
+            },
+            quest2_ari1: {
+                speaker: "Aristóteles",
+                location: "Oficina do Escultor",
+                image: img_ari_causas,
+                text: "Aqui está a Metafísica na prática! Nada de mundos invisíveis. Para entender o 'ser' dessa futura estátua, precisamos analisar as Causas. O mármore bruto na frente dele é qual causa?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 📐 É a Causa Formal.", 
+                        nextId: "quest2_ari_wrong_material", 
+                        isCorrect: false,
+                        feedbackTitle: "Resposta Incorreta...",
+                        feedbackText: "Não! A <b>Causa Formal</b> é o formato (ex: a planta da casa). O mármore é a matéria física da qual a estátua é feita, ou seja, é a <b>Causa Material</b>."
+                    },
+                    { 
+                        text: "[Avaliação] 🪨 É a Causa Material.", 
+                        nextId: "quest2_ari_right_material", 
+                        isCorrect: true,
+                        points: { ari: 1 },
+                        feedbackTitle: "Resposta Correta!",
+                        feedbackText: "Exatamente! A <b>Causa Material</b> refere-se a 'do que a coisa é feita'. Neste caso, o mármore físico."
+                    }
+                ]
+            },
+            quest2_ari_wrong_material: {
+                speaker: "Aristóteles",
+                location: "Oficina do Escultor",
+                image: img_ari_causas,
+                text: "Foco na realidade! O mármore é a matéria física, logo, é a Causa Material. O formato da estátua será a Causa Formal, e o artesão batendo o martelo é a Causa Eficiente. E qual seria a Causa Final?",
+                choices: [
+                    { text: "➡️ Avançar para a próxima pergunta.", nextId: "quest2_ari2" }
+                ]
+            },
+            quest2_ari_right_material: {
+                speaker: "Aristóteles",
+                location: "Oficina do Escultor",
+                image: img_ari_causas,
+                text: "Excelente! O mármore é a Causa Material. O formato será a Causa Formal, e o próprio escultor é a Causa Eficiente. Agora, pense na encomenda: enfeitar a praça da cidade. O que é isso?",
+                choices: [
+                    { text: "➡️ Avançar para a próxima pergunta.", nextId: "quest2_ari2" }
+                ]
+            },
+            quest2_ari2: {
+                speaker: "Aristóteles",
+                location: "Oficina do Escultor",
+                image: img_ari_causas,
+                text: "A encomenda feita ao escultor é criar uma estátua para enfeitar a praça e honrar os deuses. Dentre as causas estudadas, essa finalidade se enquadra em qual?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 🎯 Causa Final.", 
+                        nextId: "quest2_ari3", 
+                        isCorrect: true,
+                        points: { ari: 1 },
+                        feedbackTitle: "Resposta Correta!",
+                        feedbackText: "Perfeito! A <b>Causa Final</b> responde 'para que serve' ou qual o propósito ou função do ser."
+                    },
+                    { 
+                        text: "[Avaliação] 🧑‍🎨 Causa Eficiente.", 
+                        nextId: "quest2_ari3", 
+                        isCorrect: false,
+                        feedbackTitle: "Resposta Incorreta...",
+                        feedbackText: "Cuidado! A <b>Causa Eficiente</b> é *quem* fez (o escultor). A finalidade (enfeitar a praça) é a <b>Causa Final</b>."
+                    }
+                ]
+            },
+            quest2_ari3: {
+                speaker: "Aristóteles",
+                location: "Oficina do Escultor",
+                image: img_ari_causas,
+                text: "Por fim, o bloco de mármore bruto não é uma estátua hoje, mas tem a possibilidade de se tornar uma estátua majestosa. Como chamo essa possibilidade de vir a ser algo?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 🗿 O bloco é a estátua em Ato.", 
+                        nextId: "quest3_intro", 
+                        isCorrect: false,
+                        feedbackTitle: "Resposta Incorreta...",
+                        feedbackText: "Na verdade, <b>Ato</b> é a realidade presente (o mármore hoje é só um bloco em ato). A *possibilidade* de vir a ser estátua é chamada de <b>Potência</b>."
+                    },
+                    { 
+                        text: "[Avaliação] ⚡ O bloco é a estátua em Potência.", 
+                        nextId: "quest3_intro", 
+                        isCorrect: true,
+                        points: { ari: 1 },
+                        feedbackTitle: "Resposta Correta!",
+                        feedbackText: "Genial! <b>Potência</b> é a possibilidade de vir a ser algo. Quando a estátua estiver pronta, ela será estátua em <b>Ato</b> (a realização da possibilidade)."
+                    }
+                ]
+            },
+
+            // QUEST 3: O CONFLITO ÉTICO E POLÍTICO (A República vs. Meio-Termo)
+            quest3_intro: {
+                speaker: "Narrador",
+                location: "Muralhas de Atenas",
+                image: img_soldado,
+                text: "Saindo da oficina, um jovem soldado das muralhas corre até vocês. Ele está tremendo. Diz que espiões inimigos foram avistados e ele não sabe o que fazer: fugir para salvar a própria vida ou atacar sozinho como um louco.",
+                choices: [
+                    { text: "🛡️ Acalme-se, vamos usar a filosofia.", nextId: "quest3_plato" }
+                ]
+            },
+            quest3_plato: {
+                speaker: "Platão",
+                location: "Muralhas de Atenas",
+                image: img_academia,
+                text: "Como escrevi em A República, uma cidade só é justa se cada um cumprir sua função de acordo com a parte da alma que lhe cabe. O soldado faz parte dos Guardiões. Qual parte da alma deve guiá-lo?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 🧠 A parte Racional (Sabedoria).", 
+                        nextId: "quest3_ari", 
+                        isCorrect: false,
+                        feedbackTitle: "Resposta Incorreta...",
+                        feedbackText: "Segundo Platão, a parte <b>Racional</b> pertence aos <b>Governantes (Filósofos)</b>. Os Guardiões (soldados) são guiados pela parte <b>Irascível</b> (coragem, emoção de defesa)."
+                    },
+                    { 
+                        text: "[Avaliação] 🔥 A parte Irascível (Coragem).", 
+                        nextId: "quest3_ari", 
+                        isCorrect: true,
+                        points: { plato: 1 },
+                        feedbackTitle: "Resposta Correta!",
+                        feedbackText: "Correto! Na cidade ideal de Platão, os Guardiões representam a parte <b>Irascível</b> da alma, encarregados da defesa da cidade."
+                    }
+                ]
+            },
+            quest3_ari: {
+                speaker: "Aristóteles",
+                location: "Muralhas de Atenas",
+                image: img_ari_meiotermo,
+                text: "Platão está certo sobre a função dele. Mas na prática, como ele deve agir *agora*? Minha Ética do Meio-Termo ensina que devemos fugir dos extremos para alcançar a Eudaimonia. Se o medo excessivo é a Covardia, e a falta de medo total é a Temeridade (imprudência)... o que ele deve buscar?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 🏃 Fugir para não se ferir (Extremo).", 
+                        nextId: "quest3_finish", 
+                        isCorrect: false,
+                        feedbackTitle: "Resposta Incorreta...",
+                        feedbackText: "Aristóteles ensina a <b>Ética do Meio-Termo</b>. Fugir seria o vício da Covardia. Ele deve buscar o ponto de equilíbrio: a Virtude da Coragem."
+                    },
+                    { 
+                        text: "[Avaliação] ⚖️ O Meio-Termo: a virtude da Coragem.", 
+                        nextId: "quest3_finish", 
+                        isCorrect: true,
+                        points: { ari: 1 },
+                        feedbackTitle: "Resposta Correta!",
+                        feedbackText: "Brilhante! Aristóteles defende a <b>Ética do Meio-Termo</b>: o equilíbrio entre dois extremos ruins. A virtude está na medida certa."
+                    }
+                ]
+            },
+            quest3_finish: {
+                speaker: "Narrador",
+                location: "Muralhas de Atenas",
+                image: img_liceu,
+                text: "Seguindo os conselhos filosóficos, o guarda respira fundo, encontra o equilíbrio do Meio-Termo e volta ao posto para avisar seus comandantes de forma prudente.",
+                choices: [
+                    { text: "👀 Virar-se para Platão e Aristóteles.", nextId: "ending_eval" }
+                ]
+            },
+
+            // FINALIZAÇÃO
+            ending_eval: {
+                speaker: "Platão e Aristóteles",
+                location: "A Praça Vazia",
+                image: img_triunfo,
+                text: "Nós o observamos com atenção. Você usou nossa sabedoria. Agora, diga-nos: no fundo do seu coração, ao tentar entender o mundo, você confia mais no intelecto abstrato e idealista, ou na observação empírica e concreta?",
+                choices: [
+                    { text: "🌌 Prefiro a Razão Abstrata e as Ideias (Caminho de Platão).", nextId: "ending_plato" },
+                    { text: "🔬 Prefiro a Observação Prática e a Lógica (Caminho de Aristóteles).", nextId: "ending_ari" }
+                ]
+            },
+            ending_plato: {
+                speaker: "Platão",
+                location: "De volta à Biblioteca...",
+                image: img_platao_ideias,
+                text: "'Um verdadeiro amigo do Mundo das Formas', sorri Platão. A paisagem de Atenas começa a se dissolver em uma luz branca brilhante... Tudo parece transcender o Mundo Sensível.",
+                choices: [
+                    { text: "📖 Acordar.", nextId: "final_screen" }
+                ]
+            },
+            ending_ari: {
+                speaker: "Aristóteles",
+                location: "De volta à Biblioteca...",
+                image: img_ari_meiotermo,
+                text: "'Um observador astuto da Substância real', sorri Aristóteles. A paisagem de Atenas começa a se organizar logicamente, como causas e efeitos lógicos se fechando...",
+                choices: [
+                    { text: "📖 Acordar.", nextId: "final_screen" }
+                ]
+            },
+            final_screen: {
+                speaker: "Narrador",
+                location: "Biblioteca da Escola",
+                image: img_biblioteca,
+                text: "Você acorda de sobressalto. O caderno de Filosofia está aberto na sua frente. Mas curiosamente, as palavras agora fazem todo o sentido do mundo. A prova de amanhã será um passeio. Parabéns por concluir sua jornada!",
+                choices: [
+                    { text: "🏆 Ver Resultado Final", effect: showEndScreen }
+                ]
+            }
+        };
+
+        const positiveSynth = new Tone.Synth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+        positiveSynth.volume.value = -12; // Volume suave e amigável
+
+        const negativeSynth = new Tone.Synth({
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+        negativeSynth.volume.value = -10; // Som levemente grave e mais notável
+
+        function playPositiveBeep() {
+            if (Tone.context.state === 'running') {
+                positiveSynth.triggerAttackRelease("G5", "16n");
+            }
+        }
+
+        function playNegativeBeep() {
+            if (Tone.context.state === 'running') {
+                negativeSynth.triggerAttackRelease("Eb3", "8n");
+            }
+        }
+
+        async function startGame() {
+            // Inicializa o contexto de áudio do Tone.js após o primeiro clique do usuário
+            await Tone.start();
+
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            
+            // Inicia a música de fundo
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.volume = 0.15; // Volume bem baixinho para não atrapalhar a leitura
+            bgMusic.play().catch(e => console.log("Áudio bloqueado até haver interação do usuário."));
+
+            renderNode('intro_1');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Erro ao tentar modo tela cheia: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Função para encontrar termos do códex no texto e transformá-los em links
+        function parseTextForCodex(text) {
+            let parsedText = text;
+            Object.keys(codexData).forEach(term => {
+                // Regex para encontrar o termo ignorando case, mas mantendo a case original
+                const regex = new RegExp(`\\b(${term})\\b`, 'gi');
+                parsedText = parsedText.replace(regex, `<span class="codex-term" onclick="openCodexModal('$1')">$&</span>`);
+            });
+            return parsedText;
+        }
+
+        function renderNode(nodeId) {
+            state.currentNode = nodeId;
+            const node = storyData[nodeId];
+
+            // Atualiza HUD
+            document.getElementById('scene-location').innerHTML = `<i class="fas fa-map-marker-alt mr-1 text-amber-400"></i> ${node.location}`;
+            document.getElementById('speaker-name').innerText = node.speaker;
+            
+            // Renderiza a nova imagem de fundo com uma transição de fade
+            const sceneContainer = document.getElementById('scene-image-container');
+            sceneContainer.classList.remove('fade-in');
+            void sceneContainer.offsetWidth; // Força reflow para reiniciar a animação
+            sceneContainer.style.backgroundImage = `url('${node.image}')`;
+            sceneContainer.classList.add('fade-in');
+
+            // Text e Códex parsing
+            const parsedText = parseTextForCodex(node.text);
+            document.getElementById('dialogue-text').innerHTML = parsedText;
+
+            // Renderiza Escolhas
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = ''; // Limpa
+
+            node.choices.forEach((choice, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-700 hover:bg-slate-600 border border-slate-600 p-4 rounded-xl text-slate-200 transition transform hover:-translate-y-1 hover:shadow-md";
+                
+                // Formatação visual para opções de "teste"
+                let iconHtml = '<i class="fas fa-chevron-right text-amber-500 mr-2"></i>';
+                if (choice.text.includes("[Avaliação]")) {
+                    btn.className += " border-l-4 border-l-blue-500";
+                    iconHtml = '<i class="fas fa-question-circle text-blue-400 mr-2"></i>';
+                }
+
+                btn.innerHTML = `${iconHtml} ${choice.text.replace("[Avaliação] ", "")}`;
+                btn.onclick = () => handleChoice(choice);
+                choicesContainer.appendChild(btn);
+            });
+
+            // Força a reanimação do balão de diálogo
+            const dialogBox = document.getElementById('dialogue-text').parentElement;
+            dialogBox.classList.remove('slide-up');
+            void dialogBox.offsetWidth; // trigger reflow
+            dialogBox.classList.add('slide-up');
+        }
+
+        // --- STREAMING_CHUNK:Lógica de Respostas e Avaliação Pedagógica ---
+        function handleChoice(choice) {
+            // Reproduz o som correspondente: negativo para erro, positivo para acertos ou opções narrativas
+            if (choice.hasOwnProperty('isCorrect') && !choice.isCorrect) {
+                playNegativeBeep();
+            } else {
+                playPositiveBeep();
+            }
+
+            // Executa efeitos (se houver)
+            if (choice.effect) {
+                choice.effect();
+            }
+
+            // Atualiza Pontos (Silenciosamente no background)
+            if (choice.points) {
+                if (choice.points.plato) state.platoScore += choice.points.plato;
+                if (choice.points.ari) state.aristotleScore += choice.points.ari;
+                updateScoreUI();
+            }
+
+            // Checa se é uma escolha que exige feedback pedagógico
+            if (choice.hasOwnProperty('isCorrect')) {
+                showFeedbackModal(choice);
+            } else if (choice.nextId) {
+                renderNode(choice.nextId);
+            }
+        }
+
+        function updateScoreUI() {
+            document.getElementById('score-plato').innerText = state.platoScore;
+            document.getElementById('score-ari').innerText = state.aristotleScore;
+            
+            const total = Math.max(state.platoScore + state.aristotleScore, 1); // Evita /0
+            const platoPercent = (state.platoScore / total) * 100;
+            const ariPercent = (state.aristotleScore / total) * 100;
+
+            document.getElementById('bar-plato').style.width = `${platoPercent}%`;
+            document.getElementById('bar-ari').style.width = `${ariPercent}%`;
+        }
+
+        function showFeedbackModal(choice) {
+            const modal = document.getElementById('modal-feedback');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const header = document.getElementById('feedback-header');
+            
+            if (choice.isCorrect) {
+                header.className = "p-4 bg-emerald-600 text-white font-bold text-xl flex items-center";
+                icon.className = "fas fa-check-circle mr-3 text-2xl text-emerald-200";
+            } else {
+                header.className = "p-4 bg-red-600 text-white font-bold text-xl flex items-center";
+                icon.className = "fas fa-times-circle mr-3 text-2xl text-red-200";
+            }
+
+            title.innerHTML = choice.feedbackTitle;
+            document.getElementById('feedback-text').innerHTML = choice.feedbackText;
+            
+            state.pendingNextNode = choice.nextId;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeFeedbackModal() {
+            const modal = document.getElementById('modal-feedback');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            if (state.pendingNextNode) {
+                renderNode(state.pendingNextNode);
+                state.pendingNextNode = null;
+            }
+        }
+
+        // --- STREAMING_CHUNK:Lógica do Glossário (Códex) ---
+        function openCodexModal(clickedTerm) {
+            // Normalizar a busca (case insensitive)
+            const keys = Object.keys(codexData);
+            let foundKey = keys.find(k => k.toLowerCase() === clickedTerm.toLowerCase());
+            
+            if (!foundKey) foundKey = keys[0]; // Fallback
+
+            // Marcar como descoberto
+            state.codexUnlocked.add(foundKey);
+
+            showCodexMenu(foundKey); // Abre o menu focando no termo
+        }
+
+        function showCodexMenu(focusTerm = null) {
+            const modal = document.getElementById('modal-codex');
+            const content = document.getElementById('codex-content');
+            content.innerHTML = '';
+
+            // Se não passou termo específico, descobre as palavras baseadas no progresso, 
+            // mas pro jogo pedagógico, mostraremos todas bloqueadas/desbloqueadas.
+            const keys = Object.keys(codexData).sort();
+            
+            keys.forEach(key => {
+                const isDiscovered = state.codexUnlocked.has(key) || focusTerm === key;
+                if(focusTerm === key) state.codexUnlocked.add(key);
+
+                const item = document.createElement('div');
+                item.className = `mb-4 p-4 rounded-xl border ${isDiscovered ? 'bg-slate-700/50 border-amber-500/30' : 'bg-slate-800 border-slate-700 opacity-50'}`;
+                
+                if (isDiscovered) {
+                    item.innerHTML = `
+                        <h3 class="text-amber-400 font-bold text-lg mb-1"><i class="fas fa-bookmark text-xs mr-2"></i>${key}</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">${codexData[key]}</p>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <h3 class="text-slate-500 font-bold text-lg mb-1"><i class="fas fa-lock text-xs mr-2"></i>???</h3>
+                        <p class="text-slate-600 text-sm italic">Encontre este termo na história para revelar.</p>
+                    `;
+                }
+
+                if (focusTerm === key) {
+                    item.classList.add('ring-2', 'ring-amber-400', 'transform', 'scale-[1.02]', 'transition');
+                }
+
+                content.appendChild(item);
+            });
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Scroll para o item focado
+            if (focusTerm) {
+                setTimeout(() => {
+                    const elements = content.getElementsByTagName('h3');
+                    for(let el of elements) {
+                        if(el.innerText.includes(focusTerm)) {
+                            el.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        function closeCodexModal() {
+            document.getElementById('modal-codex').classList.add('hidden');
+            document.getElementById('modal-codex').classList.remove('flex');
+        }
+
+        // --- STREAMING_CHUNK:Finalização do Jogo ---
+        function showEndScreen() {
+            document.getElementById('screen-game').classList.add('hidden');
+            
+            const resultScreen = document.createElement('div');
+            resultScreen.className = "max-w-2xl w-full bg-slate-800 rounded-2xl shadow-2xl p-8 text-center border border-slate-700 fade-in";
+            
+            let profile = "";
+            let icon = "";
+            let profileDesc = "";
+            
+            const totalScore = state.platoScore + state.aristotleScore;
+            
+            // Nova lógica justa para o final baseada no placar
+            if (totalScore === 0) {
+                profile = "Estudante Confuso";
+                icon = "fa-question-circle text-slate-400";
+                profileDesc = "Você errou todas as avaliações. Precisa revisar muito bem seus conceitos de Platão e Aristóteles!";
+            } else if (Math.abs(state.platoScore - state.aristotleScore) <= 1 && totalScore > 1) {
+                profile = "Sintetizador (Equilibrado)";
+                icon = "fa-balance-scale text-amber-400";
+                profileDesc = "Você compreendeu bem ambos os lados e encontrou um bom equilíbrio entre as visões.";
+            } else if (state.platoScore > state.aristotleScore) {
+                profile = "Platônico";
+                icon = "fa-cloud text-blue-400";
+                profileDesc = "Você tem uma forte inclinação para o Mundo das Formas e o pensamento abstrato de Platão.";
+            } else {
+                profile = "Aristotélico";
+                icon = "fa-seedling text-emerald-400";
+                profileDesc = "Sua lógica é afiada! Você confia na observação e nas causas práticas de Aristóteles.";
+            }
+
+            resultScreen.innerHTML = `
+                <div class="mb-6">
+                    <i class="fas ${icon} text-6xl mb-4"></i>
+                    <h1 class="text-3xl md:text-4xl font-serif-title text-white mb-2">Revisão Concluída!</h1>
+                    <p class="text-slate-400 text-lg">Seu perfil filosófico: <b class="text-white">${profile}</b></p>
+                    <p class="text-slate-500 text-sm mt-2">${profileDesc}</p>
+                </div>
+                
+                <div class="bg-slate-700/50 p-6 rounded-xl text-left mb-8 flex justify-center gap-8">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-blue-400">${state.platoScore}</div>
+                        <div class="text-xs uppercase text-slate-400 mt-1">Pontos Platão</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-emerald-400">${state.aristotleScore}</div>
+                        <div class="text-xs uppercase text-slate-400 mt-1">Pontos Aristóteles</div>
+                    </div>
+                </div>
+
+                <button onclick="location.reload()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-6 rounded-xl transition shadow-lg">
+                    <i class="fas fa-redo mr-2"></i> Jogar Novamente
+                </button>
+            `;
+            
+            document.body.appendChild(resultScreen);
+        }
+
+        // Inicializa estado visual da barra
+        updateScoreUI();
+    </script>
+</body>
+</html>
