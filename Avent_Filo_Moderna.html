@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventuras na Filosofia Moderna</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            overflow-x: hidden;
+        }
+        
+        .font-serif-title {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        .slide-up { animation: slideUp 0.4s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Palavras do Códex */
+        .codex-term {
+            color: #fbbf24; /* Amber 400 */
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .codex-term:hover { color: #f59e0b; }
+
+        .progress-rac { transition: width 0.5s ease-in-out; background-color: #3b82f6; } /* Blue 500 */
+        .progress-emp { transition: width 0.5s ease-in-out; background-color: #10b981; } /* Emerald 500 */
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <audio id="bg-music" loop preload="auto" src="https://cdn.pixabay.com/download/audio/2026/03/19/audio_54cbf38413.mp3" crossorigin="anonymous"></audio>
+
+    <div id="screen-start" class="max-w-2xl w-full bg-slate-800 rounded-2xl shadow-2xl p-8 text-center border border-slate-700 fade-in">
+        <div class="mb-6">
+            <i class="fas fa-brain text-6xl text-amber-400 mb-4"></i>
+            <h1 class="text-4xl md:text-5xl font-serif-title text-white mb-2">Razão ou Experiência?</h1>
+            <p class="text-slate-400 text-lg">Uma Jornada pela Filosofia Moderna</p>
+        </div>
+        
+        <div class="bg-slate-700/50 p-6 rounded-xl text-left mb-8">
+            <h2 class="text-xl font-semibold mb-2 text-amber-300"><i class="fas fa-scroll mr-2"></i>Sua Missão:</h2>
+            <p class="text-slate-300 mb-4">A véspera da prova de Filosofia Moderna chegou. Exausto, você fecha os olhos... e acorda no século XVII! Para voltar, você precisará desvendar os mistérios do conhecimento ajudando Descartes, Locke e Hume.</p>
+            <ul class="list-disc list-inside text-sm text-slate-400 space-y-1">
+                <li>Tome decisões baseadas nos diálogos.</li>
+                <li>Clique nas palavras em <span class="text-amber-400 font-bold">dourado</span> para aprender no Códex.</li>
+                <li>Escolha o caminho da Razão (Racionalismo) ou dos Sentidos (Empirismo).</li>
+            </ul>
+        </div>
+
+        <button onclick="startGame()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xl py-4 px-8 rounded-xl transition transform hover:scale-105 active:scale-95 shadow-lg">
+            <i class="fas fa-play mr-2"></i> Iniciar Jornada
+        </button>
+    </div>
+
+    <div id="screen-game" class="max-w-3xl w-full hidden flex flex-col h-[90vh] fade-in">
+        
+        <!-- Top Bar (HUD) -->
+        <div class="bg-slate-800 rounded-t-2xl p-4 border-b border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
+            <div class="flex items-center gap-2">
+                <button onclick="showCodexMenu()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition text-amber-400 border border-slate-600">
+                    <i class="fas fa-book-open mr-2"></i>Códex
+                </button>
+                <button onclick="toggleFullscreen()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-200 border border-slate-600" title="Tela Cheia">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 w-full md:max-w-md px-4">
+                <div class="flex justify-between text-xs font-bold mb-1 uppercase tracking-wider">
+                    <span class="text-blue-400"><i class="fas fa-lightbulb text-xs mr-1"></i> Racionalismo (<span id="score-rac">0</span>)</span>
+                    <span class="text-emerald-400">Empirismo (<span id="score-emp">0</span>) <i class="fas fa-eye text-xs ml-1"></i></span>
+                </div>
+                <div class="h-3 w-full bg-slate-700 rounded-full overflow-hidden flex">
+                    <div id="bar-rac" class="progress-rac h-full" style="width: 50%;"></div>
+                    <div id="bar-emp" class="progress-emp h-full" style="width: 50%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 bg-slate-900 border-x border-slate-700 overflow-y-auto p-6 relative flex flex-col" id="narrative-area">
+            
+            <div id="scene-image-container" class="w-full h-48 md:h-64 rounded-xl bg-slate-800 border border-slate-700 mb-6 flex items-center justify-center relative overflow-hidden shrink-0 shadow-inner transition-all duration-500 bg-cover bg-center">
+                <!-- Ícone central (injetado via JS) ou Imagem de Fundo -->
+                <div id="scene-icon-wrapper" class="z-10"></div>
+                
+                <div class="absolute bottom-4 right-4 bg-slate-900/80 px-3 py-1 rounded-full text-xs font-semibold text-slate-300 border border-slate-600 backdrop-blur-sm z-20">
+                    <i class="fas fa-map-marker-alt mr-1 text-amber-400"></i> <span id="scene-location">Local</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-600 rounded-xl p-6 relative shadow-lg slide-up mb-4 flex-1">
+                <div class="absolute -top-4 left-6 bg-amber-500 text-slate-900 font-bold px-4 py-1 rounded-full text-sm shadow-md" id="speaker-name">
+                    Narrador
+                </div>
+                <div class="text-slate-200 text-lg leading-relaxed mt-2" id="dialogue-text">
+                    Carregando história...
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 rounded-b-2xl p-4 border-t border-slate-700 shrink-0">
+            <div id="choices-container" class="flex flex-col gap-3"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE FEEDBACK -->
+    <div id="modal-feedback" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 rounded-2xl max-w-lg w-full border border-slate-600 shadow-2xl overflow-hidden slide-up">
+            <div id="feedback-header" class="p-4 bg-blue-600 text-white font-bold text-xl flex items-center">
+                <i id="feedback-icon" class="fas fa-info-circle mr-3 text-2xl"></i>
+                <span id="feedback-title">Análise Filosófica</span>
+            </div>
+            <div class="p-6 text-slate-200 text-lg leading-relaxed" id="feedback-text"></div>
+            <div class="p-4 border-t border-slate-700 text-right bg-slate-850">
+                <button onclick="closeFeedbackModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded-lg transition">
+                    Continuar <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DO CÓDEX -->
+    <div id="modal-codex" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 rounded-2xl max-w-xl w-full border border-amber-500/50 shadow-2xl overflow-hidden slide-up max-h-[80vh] flex flex-col">
+            <div class="p-4 bg-gradient-to-r from-slate-800 to-slate-700 border-b border-amber-500/30 flex justify-between items-center shrink-0">
+                <h2 class="text-amber-400 font-serif-title font-bold text-2xl"><i class="fas fa-book mr-2"></i> Códex Filosófico</h2>
+                <button onclick="closeCodexModal()" class="text-slate-400 hover:text-white transition p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto" id="codex-content"></div>
+        </div>
+    </div>
+
+    <footer class="w-full max-w-5xl text-center mt-6 pt-4 border-t border-gray-800 text-xs text-gray-600 z-10 relative pb-2">
+        Desenvolvido por <a href="https://instagram.com/marcoasf_" target="_blank" class="text-blue-500 font-bold hover:text-blue-400 underline transition-colors">Marco Antonio da Silva Filho</a> - Professor de Filosofia com o auxílio de IA (Gemini)
+    </footer>
+	
+    <script>
+        const codexData = {
+            "Racionalismo": "Corrente filosófica (ex: Descartes) que afirma que a razão é a principal e mais segura fonte de conhecimento verdadeiro, duvidando dos sentidos.",
+            "Empirismo": "Corrente filosófica (ex: Locke e Hume) que defende que todo conhecimento legítimo deriva, em última instância, da experiência sensível.",
+            "Dúvida Metódica": "Método de Descartes: duvidar de tudo que possa ser falso (sentidos, sonhos) não para ser cético, mas para encontrar uma verdade indubitável.",
+            "Gênio Maligno": "Hipótese extrema de Descartes: e se um deus enganador manipular nossos pensamentos e até a matemática? Serve para testar os limites da dúvida.",
+            "Cogito": "Ou 'Penso, logo existo' (Cogito, ergo sum). A primeira certeza de Descartes: se estou duvidando (pensando), eu necessariamente existo.",
+            "Ideias Inatas": "Ideias que, segundo Descartes, já nascem conosco na mente (como a ideia de Deus ou da matemática). Locke critica fortemente essa noção.",
+            "Tábula Rasa": "Metáfora de John Locke: a mente humana nasce como uma 'folha em branco' e é preenchida gradualmente pelas experiências.",
+            "Sensação": "Para Locke, uma das fontes das ideias, produzida passivamente pelos objetos exteriores sobre os nossos sentidos.",
+            "Reflexão": "Para Locke, uma das fontes das ideias, proveniente da experiência interna e das operações da nossa própria mente.",
+            "Impressões": "Para David Hume, são nossas percepções vívidas, fortes e imediatas (ex: sentir a dor do fogo agora).",
+            "Causalidade": "Relação de causa e efeito. Hume critica isso afirmando que não vemos a 'conexão' entre os fatos, mas os associamos por hábito.",
+            "Hábito": "Para Hume, a mente cria expectativas (ex: o sol vai nascer amanhã) apenas baseada na repetição constante do passado, e não por lógica pura."
+        };
+
+        let state = {
+            currentNode: 'intro_1',
+            rationalismScore: 0,
+            empiricismScore: 0,
+            codexUnlocked: new Set(),
+            pendingNextNode: null
+        };
+
+        // Para substituir por imagens reais no futuro, troque a string do ícone pelo link.
+        // Exemplo: const IMG_BIBLIOTECA = "https://meusite.com/biblioteca.jpg";
+        
+        const IMG_BIBLIOTECA = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/biblioteca.png"; 
+        const IMG_QUARTO_DESCARTES = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/Quarto_Descartes.png"; // Quarto com lareira/estufa
+        const IMG_REMO_AGUA = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/Remo.png"; // O remo torto na água
+        const IMG_CEREBRO = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/Cerebro.png"; // O Cogito
+        const IMG_MERCADO_LONDRES = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/Mercado.png"; // Porto/Mercado de Locke
+        const IMG_BEBE = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/bebe.png"; // Tábula Rasa
+        const IMG_MACA = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/maca.png"; // Qualidades da Maçã
+        const IMG_TAVERNA_BILHAR = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/taverna.png"; // Bilhar de Hume (usando bola como proxy)
+        const IMG_NASCER_SOL = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/nascer_sol.png"; // O sol nascerá amanhã?
+        const IMG_TRIUNFO = "https://raw.githubusercontent.com/atitudegames/atitudegames.github.io/refs/heads/main/Images/Filo%20Moderna/Triunfo.png"; // Fim
+
+        const storyData = {
+            // INTRODUÇÃO
+            intro_1: {
+                speaker: "Narrador",
+                location: "Seu Quarto",
+                image: IMG_BIBLIOTECA,
+                text: "Livros empilhados. Cadernos abertos. A prova de Filosofia Moderna é amanhã. Você lê as palavras 'Racionalismo' e 'Empirismo' até sua visão embaçar. Lentamente, o sono toma conta...",
+                choices: [
+                    { text: "🥱 Fechar os olhos por um minuto...", nextId: "intro_2" }
+                ]
+            },
+            intro_2: {
+                speaker: "Narrador",
+                location: "Quarto Aquecido, Século XVII",
+                image: IMG_QUARTO_DESCARTES,
+                text: "Você acorda. Não está no seu quarto. Está em um cômodo de madeira, aquecido por uma lareira. Sentado perto do fogo, um homem de bigode e cabelos longos se aquece enquanto reflete antes de voltar com a escrever com uma pena.",
+                choices: [
+                    { text: "🗣️ 'Quem é você? Onde estou?'", nextId: "meet_descartes" }
+                ]
+            },
+
+            // ATO 1: DESCARTES (RACIONALISMO)
+            meet_descartes: {
+                speaker: "René Descartes",
+                location: "Quarto Aquecido",
+                image: IMG_QUARTO_DESCARTES,
+                text: "Silêncio! Estou no meio da minha Dúvida Metódica. Decidi rejeitar tudo que me causa a menor incerteza. Para encontrar a verdade absoluta, o Racionalismo exige que eu limpe minha mente de falsas crenças.",
+                choices: [
+                    { text: "🤔 'Mas por que duvidar de tudo?'", nextId: "quest1_intro" }
+                ]
+            },
+            quest1_intro: {
+                speaker: "Descartes",
+                location: "Na Janela",
+                image: IMG_REMO_AGUA,
+                text: "Venha até a janela. Veja aquele pescador com o remo na água. O remo parece torto sob a água, não é? Nossos sentidos (visão, audição) frequentemente nos enganam. Como estudante, o que você conclui disso?",
+                choices: [
+                    { 
+                        text: "[Avaliação] ❌ O remo está mesmo torto, devemos confiar no que vemos.", 
+                        nextId: "quest1_wrong", 
+                        isCorrect: false,
+                        feedbackTitle: "Erro Racionalista",
+                        feedbackText: "Descartes discorda veementemente! Se os sentidos nos enganam uma vez (ilusão de ótica), eles podem nos enganar sempre. Não podemos basear o conhecimento verdadeiro neles."
+                    },
+                    { 
+                        text: "[Avaliação] 🧠 Não podemos confiar nos sentidos para o conhecimento seguro.", 
+                        nextId: "quest1_right", 
+                        isCorrect: true,
+                        points: { rac: 1 },
+                        feedbackTitle: "Acerto Racionalista!",
+                        feedbackText: "Exatamente! Essa é a base da <b>Dúvida dos Sentidos</b> de Descartes. Se os sentidos nos enganam às vezes (como no caso do remo que parece torto na água ou em miragens), eles não são fontes 100% confiáveis."
+                    }
+                ]
+            },
+            quest1_wrong: {
+                speaker: "Descartes",
+                location: "Quarto Aquecido",
+                image: IMG_QUARTO_DESCARTES,
+                text: "Você confia demais no corpo! E se você estiver apenas sonhando agora? Ou pior... E se houver um Gênio Maligno poderoso que me engana em tudo, até na matemática? Se eu duvido de tudo, o que sobra?",
+                choices: [
+                    { text: "💭 Tentar pensar na resposta...", nextId: "quest1_cogito" }
+                ]
+            },
+            quest1_right: {
+                speaker: "Descartes",
+                location: "Quarto Aquecido",
+                image: IMG_CEREBRO,
+                text: "Brilhante! Mas vou além. E se você estiver apenas sonhando agora? Ou pior... E se houver um Gênio Maligno, um deus enganador manipulando minha mente? Se eu duvido de absolutamente tudo, o que me resta?",
+                choices: [
+                    { text: "💭 Tentar pensar na resposta...", nextId: "quest1_cogito" }
+                ]
+            },
+            quest1_cogito: {
+                speaker: "Narrador",
+                location: "A Mente de Descartes",
+                image: IMG_CEREBRO,
+                text: "Descartes te olha profundamente, esperando que você conclua o raciocínio dele. Se o Gênio Maligno o engana, Descartes tem que existir para ser enganado. E se ele duvida, ele está pensando.",
+                choices: [
+                    { 
+                        text: "[Avaliação] 💡 Cogito: 'Penso, logo existo'.", 
+                        nextId: "transition_locke", 
+                        isCorrect: true,
+                        points: { rac: 1 },
+                        feedbackTitle: "A Primeira Certeza!",
+                        feedbackText: "Perfeito! O famoso <b>Cogito, ergo sum</b>. Mesmo que o Gênio Maligno engane Descartes em tudo, para ser enganado ele precisa existir. O fato de pensar é a prova indubitável de sua existência."
+                    },
+                    { 
+                        text: "[Avaliação] 🌌 Não resta nada. O ceticismo vence.", 
+                        nextId: "transition_locke2", 
+                        isCorrect: false,
+                        feedbackTitle: "Quase...",
+                        feedbackText: "Descartes não queria ser um cético. Ele usava a dúvida como método. A resposta dele é: se eu duvido, eu penso. Se eu penso, eu existo (<b>Cogito, ergo sum</b>). Essa é a primeira verdade inabalável!"
+                    }
+                ]
+            },
+
+            transition_locke: {
+                speaker: "Descartes",
+                location: "Quarto Aquecido",
+                image: IMG_QUARTO_DESCARTES,
+                text: "Isso! Minha razão é a luz. Temos Ideias Inatas colocadas em nós por um Deus perfeito! Mas espere... a sala está girando. Parece que a experiência está te chamando para outro lugar...",
+                choices: [
+                    { text: "🌀 Ser sugado por um redemoinho temporal.", nextId: "meet_locke" }
+                ]
+            },
+	    transition_locke2: {
+                speaker: "Descartes",
+                location: "Quarto Aquecido",
+                image: IMG_QUARTO_DESCARTES,
+                text: "Não, meu amigo! Podemos confiar que temos conhecimento de outra maneira. Temos Ideias Inatas colocadas em nós por um Deus perfeito! Mas espere... a sala está girando. Parece que a experiência está te chamando para outro lugar...",
+                choices: [
+                    { text: "🌀 Ser sugado por um redemoinho temporal.", nextId: "meet_locke" }
+                ]
+            },
+            meet_locke: {
+                speaker: "John Locke",
+                location: "Porto de Londres",
+                image: IMG_MERCADO_LONDRES,
+                text: "Ideias Inatas? Que bobagem do senhor Descartes! Bem-vindo a Londres, jovem. O Empirismo é o caminho. Observe as docas, ouça os navios. O conhecimento vem da experiência. Venha, olhe este recém-nascido que está dormindo.",
+                choices: [
+                    { text: "👀 Observar o bebê.", nextId: "quest2_tabula" }
+                ]
+            },
+            quest2_tabula: {
+                speaker: "John Locke",
+                location: "Rua de Londres",
+                image: IMG_BEBE,
+                text: "Descartes diria que este bebê já nasceu com a ideia matemática de Deus embutida na mente. Mas preste atenção: como é a mente humana no momento em que nascemos, segundo a minha teoria?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 📝 É uma Tábula Rasa (folha em branco) a ser preenchida pela experiência.", 
+                        nextId: "quest2_sensation", 
+                        isCorrect: true,
+                        points: { emp: 1 },
+                        feedbackTitle: "Acerto Empirista!",
+                        feedbackText: "Isso mesmo! A famosa <b>Tábula Rasa</b>. Locke defende que não existem Ideias Inatas. A mente é um papel em branco e todo o nosso 'material de pensamento' vem da experiência."
+                    },
+                    { 
+                        text: "[Avaliação] 🧬 É cheia de Ideias Inatas, como Descartes dizia.", 
+                        nextId: "quest2_sensation2", 
+                        isCorrect: false,
+                        feedbackTitle: "Erro Empirista",
+                        feedbackText: "Locke discorda totalmente! Ele critica as Ideias Inatas. Para ele, uma criança ou um 'idiota' não têm noções de matemática complexa. A mente é uma <b>Tábula Rasa</b> (folha em branco) preenchida pela experiência."
+                    }
+                ]
+            },
+            quest2_sensation: {
+                speaker: "John Locke",
+                location: "Banca de Frutas",
+                image: IMG_MACA,
+                text: "Correto. Tudo vem de duas fontes: da Sensação (sentidos) ou da Reflexão (nossa mente processando). Pegue esta maçã. Você forma a 'Ideia Complexa' de maçã juntando ideias simples como cor vermelha, formato redondo e sabor doce.",
+                choices: [
+                    { text: "🍎 'Entendi. A experiência molda tudo.'", nextId: "transition_hume" }
+                ]
+            },
+	    quest2_sensation2: {
+                speaker: "John Locke",
+                location: "Banca de Frutas",
+                image: IMG_MACA,
+                text: "Você passou muito tempo com Descartes... Entenda de uma vez: Tudo vem de duas fontes: da Sensação (sentidos) ou da Reflexão (nossa mente processando). Pegue esta maçã. Você forma a 'Ideia Complexa' de maçã juntando ideias simples como cor vermelha, formato redondo e sabor doce.",
+                choices: [
+                    { text: "🍎 'Entendi. A experiência molda tudo.'", nextId: "transition_hume" }
+                ]
+            },
+            transition_hume: {
+                speaker: "Narrador",
+                location: "Viagem para a Escócia",
+                image: IMG_MERCADO_LONDRES,
+                text: "Locke sorri e morde a maçã. De repente, o barulho do porto se transforma no som de bolas de bilhar batendo umas nas outras. O clima esfria. Você está em uma taverna mal iluminada.",
+                choices: [
+                    { text: "🍻 Olhar ao redor na taverna.", nextId: "meet_hume" }
+                ]
+            },
+            meet_hume: {
+                speaker: "David Hume",
+                location: "Taverna em Edimburgo",
+                image: IMG_TAVERNA_BILHAR,
+                text: "Locke estava no caminho certo com o empirismo, mas não foi longe o suficiente. Sente-se. Sou David Hume. Meu empirismo é radical. Veja essas bolas de bilhar. A bola branca bate na vermelha, e a vermelha se move.",
+                choices: [
+                    { text: "🎱 'Sim, é a Causalidade (causa e efeito).'", nextId: "quest3_causality" }
+                ]
+            },
+            quest3_causality: {
+                speaker: "David Hume",
+                location: "Mesa de Bilhar",
+                image: IMG_TAVERNA_BILHAR,
+                text: "Aí é que está o erro! Você 'vê' a bola batendo e a outra andando. Mas você VÊ a 'energia' ou 'força' passando de uma pra outra? Não! Por que acreditamos tão cegamente na Causalidade se não a percebemos?",
+                choices: [
+                    { 
+                        text: "[Avaliação] 🔄 Por causa do Hábito. Vimos isso repetir várias vezes no passado.", 
+                        nextId: "quest3_sun", 
+                        isCorrect: true,
+                        points: { emp: 1 },
+                        feedbackTitle: "Acerto Humeano!",
+                        feedbackText: "Exatamente! A crítica à <b>Causalidade</b>. Para Hume, não vemos a 'causa' verdadeira. Apenas vemos eventos conjuntos repetidas vezes. O <b>Hábito</b> e o costume criam a expectativa em nossa mente."
+                    },
+                    { 
+                        text: "[Avaliação] 🔗 Porque a conexão lógica entre os objetos é visível e garantida.", 
+                        nextId: "quest3_sun", 
+                        isCorrect: false,
+                        feedbackTitle: "Erro Humeano",
+                        feedbackText: "Hume diz que não! Não há garantia lógica ou força visível. Acreditamos na relação de causa e efeito puramente pelo <b>Hábito</b>. Porque vimos acontecer repetidas vezes no passado, nossa mente 'espera' que ocorra de novo."
+                    }
+                ]
+            },
+            quest3_sun: {
+                speaker: "David Hume",
+                location: "Porta da Taverna",
+                image: IMG_NASCER_SOL,
+                text: "É o Hábito! Nossa mente associa ideias baseada em repetições passadas. Mas o futuro não tem obrigação de ser igual ao passado. Portanto, com base na minha filosofia empírica rigorosa...",
+                choices: [
+                    { 
+                        text: "[Avaliação] ☀️ 'Não temos 100% de certeza lógica de que o sol nascerá amanhã.'", 
+                        nextId: "ending_eval", 
+                        isCorrect: true,
+                        points: { emp: 1 },
+                        feedbackTitle: "O Ceticismo de Hume!",
+                        feedbackText: "Isso! Por mais absurdo que pareça para o senso comum, Hume afirma que não há contradição lógica em dizer que 'o sol não nascerá amanhã'. É apenas provável, fundamentado na nossa crença e hábito, não numa certeza absoluta matemática."
+                    },
+                    { 
+                        text: "[Avaliação] ☀️ 'Temos certeza absoluta e científica de que o sol nascerá.'", 
+                        nextId: "ending_eval", 
+                        isCorrect: false,
+                        feedbackTitle: "Quase...",
+                        feedbackText: "Para Hume, o conhecimento baseado na experiência lida com *probabilidades*. Não há contradição lógica em imaginar o sol não nascendo. Acreditamos nisso firmemente pelo Hábito, mas não é uma certeza absoluta como '2+2=4'."
+                    }
+                ]
+            },
+
+            ending_eval: {
+                speaker: "Descartes, Locke e Hume",
+                location: "O Vazio da Mente",
+                image: IMG_TRIUNFO,
+                text: "Os três filósofos aparecem diante de você. 'Você nos ouviu', diz Descartes. 'Conheceu a Razão e os Sentidos', pontua Locke. 'Agora deve acordar', finaliza Hume. Mas antes... no fundo, qual caminho faz mais sentido para você?",
+                choices: [
+                    { text: "💭 Confio mais na Razão e na lógica dedutiva pura (Racionalismo).", nextId: "ending_rac", points: { rac: 2 } },
+                    { text: "🖐️ Confio mais na Experiência e na observação do mundo (Empirismo).", nextId: "ending_emp", points: { emp: 2 } }
+                ]
+            },
+            ending_rac: {
+                speaker: "Narrador",
+                location: "Seu Quarto",
+                image: IMG_BIBLIOTECA,
+                text: "A imagem dos filósofos se desfaz em equações matemáticas e clareza mental. Você acorda com a mente afiada. 'Penso, logo existo', você sussurra. A prova não será um problema.",
+                choices: [
+                    { text: "🏆 Ver Resultado Final", effect: showEndScreen }
+                ]
+            },
+            ending_emp: {
+                speaker: "Narrador",
+                location: "Seu Quarto",
+                image: IMG_BIBLIOTECA,
+                text: "Você acorda sentindo a textura do caderno, o cheiro de café e ouvindo os pássaros. A experiência do mundo ao redor é real e vívida. Sua tábula rasa está preenchida para a prova.",
+                choices: [
+                    { text: "🏆 Ver Resultado Final", effect: showEndScreen }
+                ]
+            }
+        };
+
+        const positiveSynth = new Tone.Synth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+        positiveSynth.volume.value = -3;
+
+        const negativeSynth = new Tone.Synth({
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+        negativeSynth.volume.value = -3;
+
+        function playPositiveBeep() {
+            if (Tone.context.state === 'running') positiveSynth.triggerAttackRelease("C5", "16n");
+        }
+
+        function playNegativeBeep() {
+            if (Tone.context.state === 'running') negativeSynth.triggerAttackRelease("G3", "8n");
+        }
+
+        async function startGame() {
+            await Tone.start();
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.volume = 0.50;
+            bgMusic.play().catch(e => console.log("Áudio pendente de interação."));
+
+            renderNode('intro_1');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {});
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+
+        function parseTextForCodex(text) {
+            let parsedText = text;
+            Object.keys(codexData).forEach(term => {
+                const regex = new RegExp(`\\b(${term})\\b`, 'gi');
+                parsedText = parsedText.replace(regex, `<span class="codex-term" onclick="openCodexModal('$1')">$&</span>`);
+            });
+            return parsedText;
+        }
+
+        function renderNode(nodeId) {
+            state.currentNode = nodeId;
+            const node = storyData[nodeId];
+
+            document.getElementById('scene-location').innerHTML = `<i class="fas fa-map-marker-alt mr-1 text-amber-400"></i> ${node.location}`;
+            document.getElementById('speaker-name').innerText = node.speaker;
+            
+            const sceneContainer = document.getElementById('scene-image-container');
+            const iconWrapper = document.getElementById('scene-icon-wrapper');
+            
+            sceneContainer.classList.remove('fade-in');
+            void sceneContainer.offsetWidth; // Force reflow
+            
+            // Verifica se a constante é um link de imagem (começa com http ou ./)
+            if (node.image.startsWith('http') || node.image.startsWith('./')) {
+                sceneContainer.style.backgroundImage = `url('${node.image}')`;
+                iconWrapper.innerHTML = ''; // Limpa o ícone
+            } else {
+                // É uma classe do FontAwesome
+                sceneContainer.style.backgroundImage = 'none';
+                iconWrapper.innerHTML = `<i class="${node.image} text-7xl text-slate-100 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)] opacity-90 transition-transform hover:scale-110 duration-300"></i>`;
+            }
+            sceneContainer.classList.add('fade-in');
+
+            const parsedText = parseTextForCodex(node.text);
+            document.getElementById('dialogue-text').innerHTML = parsedText;
+
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = ''; 
+
+            node.choices.forEach((choice) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-700 hover:bg-slate-600 border border-slate-600 p-4 rounded-xl text-slate-200 transition transform hover:-translate-y-1 hover:shadow-md";
+                
+                let iconHtml = '<i class="fas fa-chevron-right text-amber-500 mr-2"></i>';
+                if (choice.text.includes("[Avaliação]")) {
+                    btn.className += " border-l-4 border-l-blue-500";
+                    iconHtml = '<i class="fas fa-question-circle text-blue-400 mr-2"></i>';
+                }
+
+                btn.innerHTML = `${iconHtml} ${choice.text.replace("[Avaliação] ", "")}`;
+                btn.onclick = () => handleChoice(choice);
+                choicesContainer.appendChild(btn);
+            });
+
+            const dialogBox = document.getElementById('dialogue-text').parentElement;
+            dialogBox.classList.remove('slide-up');
+            void dialogBox.offsetWidth;
+            dialogBox.classList.add('slide-up');
+        }
+
+        function handleChoice(choice) {
+            if (choice.hasOwnProperty('isCorrect') && !choice.isCorrect) {
+                playNegativeBeep();
+            } else {
+                playPositiveBeep();
+            }
+
+            if (choice.effect) choice.effect();
+
+            if (choice.points) {
+                if (choice.points.rac) state.rationalismScore += choice.points.rac;
+                if (choice.points.emp) state.empiricismScore += choice.points.emp;
+                updateScoreUI();
+            }
+
+            if (choice.hasOwnProperty('isCorrect')) {
+                showFeedbackModal(choice);
+            } else if (choice.nextId) {
+                renderNode(choice.nextId);
+            }
+        }
+
+        function updateScoreUI() {
+            document.getElementById('score-rac').innerText = state.rationalismScore;
+            document.getElementById('score-emp').innerText = state.empiricismScore;
+            
+            const total = Math.max(state.rationalismScore + state.empiricismScore, 1);
+            const racPercent = (state.rationalismScore / total) * 100;
+            const empPercent = (state.empiricismScore / total) * 100;
+
+            document.getElementById('bar-rac').style.width = `${racPercent}%`;
+            document.getElementById('bar-emp').style.width = `${empPercent}%`;
+        }
+
+        function showFeedbackModal(choice) {
+            const modal = document.getElementById('modal-feedback');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const header = document.getElementById('feedback-header');
+            
+            if (choice.isCorrect) {
+                header.className = "p-4 bg-emerald-600 text-white font-bold text-xl flex items-center";
+                icon.className = "fas fa-check-circle mr-3 text-2xl text-emerald-200";
+            } else {
+                header.className = "p-4 bg-red-600 text-white font-bold text-xl flex items-center";
+                icon.className = "fas fa-times-circle mr-3 text-2xl text-red-200";
+            }
+
+            title.innerHTML = choice.feedbackTitle;
+            document.getElementById('feedback-text').innerHTML = choice.feedbackText;
+            
+            state.pendingNextNode = choice.nextId;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeFeedbackModal() {
+            const modal = document.getElementById('modal-feedback');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            if (state.pendingNextNode) {
+                renderNode(state.pendingNextNode);
+                state.pendingNextNode = null;
+            }
+        }
+
+        function openCodexModal(clickedTerm) {
+            const keys = Object.keys(codexData);
+            let foundKey = keys.find(k => k.toLowerCase() === clickedTerm.toLowerCase());
+            if (!foundKey) foundKey = keys[0];
+
+            state.codexUnlocked.add(foundKey);
+            showCodexMenu(foundKey);
+        }
+
+        function showCodexMenu(focusTerm = null) {
+            const modal = document.getElementById('modal-codex');
+            const content = document.getElementById('codex-content');
+            content.innerHTML = '';
+
+            const keys = Object.keys(codexData).sort();
+            
+            keys.forEach(key => {
+                const isDiscovered = state.codexUnlocked.has(key) || focusTerm === key;
+                if(focusTerm === key) state.codexUnlocked.add(key);
+
+                const item = document.createElement('div');
+                item.className = `mb-4 p-4 rounded-xl border ${isDiscovered ? 'bg-slate-700/50 border-amber-500/30' : 'bg-slate-800 border-slate-700 opacity-50'}`;
+                
+                if (isDiscovered) {
+                    item.innerHTML = `
+                        <h3 class="text-amber-400 font-bold text-lg mb-1"><i class="fas fa-bookmark text-xs mr-2"></i>${key}</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">${codexData[key]}</p>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <h3 class="text-slate-500 font-bold text-lg mb-1"><i class="fas fa-lock text-xs mr-2"></i>???</h3>
+                        <p class="text-slate-600 text-sm italic">Encontre este termo na história para revelar.</p>
+                    `;
+                }
+
+                if (focusTerm === key) {
+                    item.classList.add('ring-2', 'ring-amber-400', 'transform', 'scale-[1.02]', 'transition');
+                }
+
+                content.appendChild(item);
+            });
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (focusTerm) {
+                setTimeout(() => {
+                    const elements = content.getElementsByTagName('h3');
+                    for(let el of elements) {
+                        if(el.innerText.includes(focusTerm)) {
+                            el.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        function closeCodexModal() {
+            document.getElementById('modal-codex').classList.add('hidden');
+            document.getElementById('modal-codex').classList.remove('flex');
+        }
+
+        function showEndScreen() {
+            document.getElementById('screen-game').classList.add('hidden');
+            
+            const resultScreen = document.createElement('div');
+            resultScreen.className = "max-w-2xl w-full bg-slate-800 rounded-2xl shadow-2xl p-8 text-center border border-slate-700 fade-in";
+            
+            let profile = "";
+            let icon = "";
+            let profileDesc = "";
+            
+            const totalScore = state.rationalismScore + state.empiricismScore;
+            
+            if (totalScore === 0) {
+                profile = "Estudante Sonolento";
+                icon = "fa-bed text-slate-400";
+                profileDesc = "Você errou as avaliações. Volte para a biblioteca e revise Descartes, Locke e Hume!";
+            } else if (state.rationalismScore > state.empiricismScore + 1) {
+                profile = "Mente Racionalista";
+                icon = "fa-brain text-blue-400";
+                profileDesc = "Você tem a alma de Descartes! Confia na clareza do pensamento, da razão lógica e duvida das ilusões dos sentidos.";
+            } else if (state.empiricismScore > state.rationalismScore + 1) {
+                profile = "Observador Empirista";
+                icon = "fa-eye text-emerald-400";
+                profileDesc = "Locke e Hume estariam orgulhosos! Para você, o mundo real e a experiência sensorial são a verdadeira fonte do conhecimento.";
+            } else {
+                profile = "Sintetizador Crítico";
+                icon = "fa-balance-scale text-amber-400";
+                profileDesc = "Você encontrou valor tanto na luz da razão quanto na prova da experiência, equilibrando as duas visões (talvez um futuro fã de Kant?).";
+            }
+
+            resultScreen.innerHTML = `
+                <div class="mb-6">
+                    <i class="fas ${icon} text-6xl mb-4"></i>
+                    <h1 class="text-3xl md:text-4xl font-serif-title text-white mb-2">Jornada Concluída!</h1>
+                    <p class="text-slate-400 text-lg">Seu perfil filosófico: <b class="text-white">${profile}</b></p>
+                    <p class="text-slate-500 text-sm mt-2">${profileDesc}</p>
+                </div>
+                
+                <div class="bg-slate-700/50 p-6 rounded-xl text-left mb-8 flex justify-center gap-8">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-blue-400">${state.rationalismScore}</div>
+                        <div class="text-xs uppercase text-slate-400 mt-1">Pontos Razão</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-emerald-400">${state.empiricismScore}</div>
+                        <div class="text-xs uppercase text-slate-400 mt-1">Pontos Experiência</div>
+                    </div>
+                </div>
+
+                <button onclick="location.reload()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-6 rounded-xl transition shadow-lg">
+                    <i class="fas fa-redo mr-2"></i> Acordar e Tentar de Novo
+                </button>
+            `;
+            
+            document.body.appendChild(resultScreen);
+        }
+
+        updateScoreUI();
+    </script>
+</body>
+</html>
