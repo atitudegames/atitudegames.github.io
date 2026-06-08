@@ -618,13 +618,13 @@
             oscillator: { type: "sine" },
             envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
         }).toDestination();
-        positiveSynth.volume.value = -12; // Volume suave e amigável
+        positiveSynth.volume.value = -5; // Volume suave e amigável
 
         const negativeSynth = new Tone.Synth({
             oscillator: { type: "triangle" },
             envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.5 }
         }).toDestination();
-        negativeSynth.volume.value = -10; // Som levemente grave e mais notável
+        negativeSynth.volume.value = -5; // Som levemente grave e mais notável
 
         function playPositiveBeep() {
             if (Tone.context.state === 'running') {
@@ -647,7 +647,7 @@
             
             // Inicia a música de fundo
             const bgMusic = document.getElementById('bg-music');
-            bgMusic.volume = 0.15; // Volume bem baixinho para não atrapalhar a leitura
+            bgMusic.volume = 0.4; // Volume bem baixinho para não atrapalhar a leitura
             bgMusic.play().catch(e => console.log("Áudio bloqueado até haver interação do usuário."));
 
             renderNode('intro_1');
