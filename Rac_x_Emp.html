@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Jornada do Conhecimento: Racionalistas vs Empiristas</title>
+<style>
+    /* VARIÁVEIS DE ESTÉTICA PARA CUSTOMIZAÇÃO */
+    :root {
+        --fundo-geral-img: none; 
+        --fundo-geral-cor: #1a1a2e;
+        --tabuleiro-fundo-img: none;
+        --tabuleiro-fundo-cor: #0f172a;
+        
+        --p1-cor: #e74c3c; 
+        --p2-cor: #3498db; 
+        --p3-cor: #f1c40f; 
+        --p4-cor: #9b59b6; 
+
+        --casa-racionalista-cor: #2980b9;
+        --casa-empirista-cor: #800020;
+        --casa-pergunta-cor: #f39c12;
+        --texto-cor: #ffffff;
+        --destaque-cor: #e5b143;
+
+        /* SE QUISER IMAGENS NAS CASAS ESPECIAIS, MUDE "none" PARA "url('sua-imagem.png')" */
+        --img-casa-rac: none;  
+        --img-casa-emp: none;  
+        --img-casa-perg: none; 
+    }
+
+    body { font-family: 'Georgia', serif; margin: 0; padding: 0; background: var(--fundo-geral-cor) var(--fundo-geral-img) center/cover; color: var(--texto-cor); overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+    h1, h2, h3 { text-shadow: 2px 2px 4px #000; color: var(--destaque-cor); margin: 0 0 10px 0; }
+    
+    button { padding: 12px 15px; font-size: 16px; background: var(--destaque-cor); color: #1a1a2e; border: 2px solid #fff; border-radius: 5px; cursor: pointer; font-weight: bold; font-family: inherit; transition: 0.2s; width: 100%; margin-bottom: 10px; }
+    button:hover { background: #d49a2a; color: #fff; transform: scale(1.02); }
+    button:disabled { background: #555; color: #888; cursor: not-allowed; border-color: #666; transform: none; }
+
+    #setup-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: rgba(0,0,0,0.9); z-index: 200; position: absolute; width: 100%; }
+    .setup-form { background: #16213e; padding: 30px; border-radius: 10px; border: 2px solid var(--destaque-cor); text-align: center; width: 400px; }
+    .player-setup { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .player-setup input, .player-setup select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 45%; }
+
+    #game-screen { display: none; flex: 1; display: flex; flex-direction: row; padding: 15px; gap: 15px; box-sizing: border-box; min-height: 0; }
+    
+    #left-panel { width: 300px; background: rgba(22, 33, 62, 0.9); border: 2px solid var(--destaque-cor); border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 15px; height: 100%; box-sizing: border-box; }
+    .score-item { padding: 10px; border-radius: 5px; background: rgba(0,0,0,0.5); border: 1px solid #555; display: flex; align-items: center; gap: 10px; opacity: 0.6; transition: 0.3s; margin-bottom: 8px; }
+    .score-item.active { opacity: 1; border-color: var(--destaque-cor); box-shadow: 0 0 10px var(--destaque-cor); background: rgba(229, 177, 67, 0.2); }
+    .pawn-icon { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 5px #000; }
+    
+    #log-container { flex: 1; min-height: 0; background: rgba(0,0,0,0.6); border-radius: 5px; padding: 10px; overflow-y: auto; font-size: 14px; border: 1px solid #444; display: flex; flex-direction: column; gap: 8px; }
+    .log-entry { border-bottom: 1px solid #333; padding-bottom: 5px; }
+    .log-highlight { color: var(--destaque-cor); font-weight: bold; }
+
+    #center-panel { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0; }
+    #board-wrapper { width: 100%; max-width: 85vh; aspect-ratio: 1/1; position: relative; background: var(--tabuleiro-fundo-cor) var(--tabuleiro-fundo-img) center/cover; border: 4px solid var(--destaque-cor); border-radius: 10px; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+    .square { width: 10%; height: 10%; position: absolute; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; color: rgba(255,255,255,0.5); text-shadow: 1px 1px 2px #000; }
+    
+    .casa-rac { background-color: rgba(41, 128, 185, 0.5); background-image: var(--img-casa-rac); background-size: cover; background-position: center; box-shadow: inset 0 0 15px var(--casa-racionalista-cor); }
+    .casa-emp { background-color: rgba(252, 108, 133, 0.5);
+; background-image: var(--img-casa-emp); background-size: cover; background-position: center; box-shadow: inset 0 0 15px var(--casa-empirista-cor); }
+    .casa-perg { background-color: rgba(243, 156, 18, 0.5); background-image: var(--img-casa-perg); background-size: cover; background-position: center; box-shadow: inset 0 0 15px var(--casa-pergunta-cor); }
+
+    .player-token { width: 35%; height: 35%; border-radius: 50%; position: absolute; border: 2px solid #fff; box-shadow: 0 0 5px #000; transition: all 0.4s ease-in-out; display: flex; justify-content: center; z-index: 10; }
+    .player-name-label { position: absolute; top: -25px; background: rgba(0,0,0,0.8); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap; pointer-events: none; border: 1px solid #555; }
+    
+    .p1 { background: var(--p1-cor); top: 10%; left: 10%; }
+    .p2 { background: var(--p2-cor); top: 10%; right: 10%; }
+    .p3 { background: var(--p3-cor); bottom: 10%; left: 10%; }
+    .p4 { background: var(--p4-cor); bottom: 10%; right: 10%; }
+
+    #right-panel { width: 250px; background: rgba(22, 33, 62, 0.9); border: 2px solid var(--destaque-cor); border-radius: 10px; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
+    #dice-result { font-size: 60px; text-align: center; margin: 20px 0; text-shadow: 0 0 10px var(--destaque-cor); }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
+    .modal-content { background: #0f3460; padding: 30px; border-radius: 10px; border: 3px solid var(--destaque-cor); max-width: 550px; text-align: center; }
+    .btn-opcao { background: #16213e; color: #fff; border: 1px solid var(--destaque-cor); text-align: left; }
+    .btn-opcao:hover { background: var(--destaque-cor); color: #000; }
+</style>
+</head>
+<body>
+
+<audio id="bg-music" loop preload="auto">
+    <source src="https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3" type="audio/mpeg">
+</audio>
+
+<div id="setup-screen">
+    <div class="setup-form">
+        <h1>A Jornada do Conhecimento</h1>
+        <h3 style="color: #fff; font-size: 16px;">Racionalistas vs Empiristas</h3>
+        <hr style="border-color: #555; margin-bottom:20px;">
+        <label>Número de Jogadores:</label>
+        <select id="num-players" onchange="atualizarFormularios()" style="padding: 5px; margin-bottom: 20px;">
+            <option value="2">2 Jogadores</option>
+            <option value="3">3 Jogadores</option>
+            <option value="4">4 Jogadores</option>
+        </select>
+        <div id="players-inputs"></div>
+        <button onclick="iniciarJogo()">⚔️ Iniciar Jornada</button>
+    </div>
+</div>
+
+<div id="game-screen">
+    <div id="left-panel">
+        <h2 style="text-align: center;">Placar</h2>
+        <div id="scoreboard"></div>
+        <h3 style="margin-top: 10px; font-size: 16px; border-bottom: 1px solid #555; padding-bottom: 5px;">Últimas Ações</h3>
+        <div id="log-container"></div>
+    </div>
+    <div id="center-panel">
+        <div id="board-wrapper"></div>
+    </div>
+    <div id="right-panel">
+        <h2 style="text-align: center;">Controles</h2>
+        <div id="dice-result">🎲</div>
+        <button id="btnDado" onclick="rolarDado()" style="height: 60px; font-size: 20px;">Rolar Dado</button>
+        <hr style="border-color: #555; width: 100%; margin: 20px 0;">
+        <button onclick="toggleMusic()" id="btnMusic">🔊 Pausar Música</button>
+        <button onclick="toggleFullscreen()">🖥️ Tela Cheia</button>
+    </div>
+</div>
+
+<div id="modal-geral" class="modal-overlay">
+    <div class="modal-content">
+        <h2 id="modal-titulo" style="font-size: 24px;">Aviso</h2>
+        <p id="modal-texto" style="font-size: 18px; line-height: 1.5; margin: 20px 0;">Texto aqui.</p>
+        <div id="modal-opcoes"></div>
+        <button id="modal-btn-ok" style="display:none; margin-top:20px;">Continuar</button>
+        <button id="modal-btn-restart" onclick="reiniciarJogo()" style="display:none; margin-top:20px; background: #e74c3c; border-color: #fff;">🔄 Jogar Novamente</button>
+    </div>
+</div>
+
+<script>
+    const totalCasas = 100;
+    let jogadores = [];
+    let turnoAtual = 0;
+    let jogando = false;
+    let mapaCasas = {}; 
+    const coresHex = ["var(--p1-cor)", "var(--p2-cor)", "var(--p3-cor)", "var(--p4-cor)"];
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function tocarSom(tipo) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        if (tipo === 'positivo') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        } else if (tipo === 'negativo') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.4);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+    }
+
+    const dbOriginal = {
+        bonusRac: [
+            { desc: "Você aplicou a Dúvida Metódica e limpou o terreno das incertezas.", avanca: 2 },
+            { desc: "Descobriu a primeira certeza: 'Penso, logo existo'.", avanca: 3 },
+            { desc: "Usou a Regra da Análise para dividir um problema complexo.", avanca: 2 },
+            { desc: "A ideia de um Deus bom garantiu a validade da sua razão.", avanca: 3 },
+            { desc: "Reconheceu uma Ideia Inata (matemática) sem precisar dos sentidos.", avanca: 2 },
+            { desc: "Aplicou a Regra da Evidência, aceitando só o claro e distinto.", avanca: 2 },
+            { desc: "Compreendeu que para ser enganado pelo Gênio, você precisa existir.", avanca: 3 },
+            { desc: "Fez a Síntese, partindo do simples para o complexo.", avanca: 2 },
+            { desc: "Usou a Regra da Enumeração e revisou tudo com sucesso.", avanca: 2 },
+            { desc: "Duvidou do sonho e encontrou a realidade racional.", avanca: 2 }
+        ],
+        bonusEmp: [
+            { desc: "Sua mente ('tábula rasa') absorveu novas experiências ricas.", avanca: 3 },
+            { desc: "Você formou uma ideia complexa a partir de impressões simples.", avanca: 2 },
+            { desc: "Percebeu que calor e chama são unidos por hábito, evitando dogmas.", avanca: 2 },
+            { desc: "Associou ideias por Contiguidade (proximidade de tempo).", avanca: 2 },
+            { desc: "Reconheceu que a razão pura não extrai verdades de fatos práticos.", avanca: 3 },
+            { desc: "Usou a Sensação para captar qualidades primárias de um objeto.", avanca: 2 },
+            { desc: "Usou a Reflexão para entender suas operações mentais internas.", avanca: 2 },
+            { desc: "Associou eventos por Semelhança de forma brilhante.", avanca: 2 },
+            { desc: "Entendeu que ideias são apenas cópias enfraquecidas das impressões.", avanca: 2 },
+            { desc: "Criticou as ideias inatas com sucesso, comprovando a experiência.", avanca: 3 }
+        ],
+        trapRac: [
+            { desc: "Você confiou nos sentidos e foi vítima de uma ilusão de ótica! Volte.", recuo: 2 },
+            { desc: "O Gênio Maligno te enganou com premissas falsas! Volte.", recuo: 3 },
+            { desc: "Você confundiu um sonho extremamente vívido com a realidade. Volte.", recuo: 2 },
+            { desc: "Aceitou uma informação por costume, violando a Regra da Evidência. Volte.", recuo: 2 },
+            { desc: "Esqueceu a Regra da Enumeração e omitiu um detalhe crucial. Volte.", recuo: 2 },
+            { desc: "Tentou resolver algo complexo sem dividi-lo em partes (Análise). Volte.", recuo: 2 },
+            { desc: "Acreditou no paladar que estava alterado por uma gripe. Volte.", recuo: 2 },
+            { desc: "Foi enganado por uma miragem no deserto. Volte.", recuo: 3 }
+        ],
+        trapEmp: [
+            { desc: "Você confundiu o hábito com uma conexão lógica inquebrável. Volte.", recuo: 2 },
+            { desc: "Esqueceu que a mente não cria do nada, apenas compõe ideias. Volte.", recuo: 2 },
+            { desc: "Acreditou que o sol nascer amanhã é uma certeza lógica absoluta. Volte.", recuo: 3 },
+            { desc: "Tentou pensar além dos limites que a experiência fornece. Volte.", recuo: 2 },
+            { desc: "Agrupou ideias incompatíveis sem base na sensação. Volte.", recuo: 2 },
+            { desc: "Caiu na ilusão dogmática de onipotência do pensamento. Volte.", recuo: 3 },
+            { desc: "Esqueceu que a ciência, no fundo, também repousa em crenças e probabilidades. Volte.", recuo: 2 },
+            { desc: "Confundiu uma ideia secundária com qualidades primárias do objeto. Volte.", recuo: 2 }
+        ],
+        perguntas: [
+            { q: "Para Descartes, qual era o objetivo principal de 'duvidar de tudo' (Dúvida Metódica)?", op: ["Tornar-se cético.", "Encontrar um fundamento firme para o conhecimento.", "Negar Deus."], certa: 1 },
+            { q: "Qual a diferença entre Ideias e Impressões para Hume?", op: ["Não há diferença.", "Impressões são vívidas; Ideias são cópias enfraquecidas.", "Ideias são inatas; Impressões divinas."], certa: 1 },
+            { q: "O que a 'Regra da Análise' de Descartes sugere?", op: ["Dividir problemas grandes em partes menores.", "Revisar tudo.", "Aceitar o óbvio."], certa: 0 },
+            { q: "O que significa dizer que a mente é uma 'Tábula Rasa', segundo Locke?", op: ["Tem leis matemáticas natas.", "É uma folha em branco preenchida pela experiência.", "É enganada pelos sentidos."], certa: 1 },
+            { q: "Para Hume, quando dizemos que 'A causa B', estamos apenas relatando:", op: ["Uma dedução matemática.", "Um hábito criado pela repetição dos eventos juntos.", "Revelação divina."], certa: 1 },
+            { q: "O que é o 'Gênio Maligno' para Descartes?", op: ["Um monstro real.", "Uma hipótese extrema para testar a resistência do conhecimento.", "Um anjo."], certa: 1 },
+            { q: "Qual a primeira certeza indubitável encontrada por Descartes?", op: ["Penso, logo existo.", "O sol nascerá amanhã.", "Deus é um gênio maligno."], certa: 0 },
+            { q: "Por que Descartes desconfiava dos sentidos?", op: ["Eles podem nos enganar (como ilusões de ótica e sonhos).", "Eles provam a experiência.", "Locke mandou."], certa: 0 },
+            { q: "Como Descartes prova a existência de Deus?", op: ["Olhando a natureza.", "A ideia de um ser perfeito na nossa mente deve ter vindo de um ser perfeito.", "Pelo hábito."], certa: 1 },
+            { q: "Segundo Locke, quais são as duas fontes de ideias (experiência)?", op: ["Sensação e Reflexão.", "Causalidade e Contiguidade.", "Análise e Síntese."], certa: 0 },
+            { q: "Para Hume, associar a fumaça ao fogo é exemplo do princípio de:", op: ["Semelhança.", "Causalidade (Hábito).", "Contradição."], certa: 1 },
+            { q: "O que é uma 'Ideia Inata' para Descartes?", op: ["Um 'software de fábrica' no cérebro (ideias que nascem conosco).", "Algo visto pela sensação.", "Um hábito."], certa: 0 },
+            { q: "A Regra da Evidência de Descartes manda aceitar apenas o que for...", op: ["Familiar e comum.", "Claro e distinto.", "Aprovado pelos sentidos."], certa: 1 },
+            { q: "Para Locke, uma 'montanha de ouro' seria um exemplo de:", op: ["Ideia simples inata.", "Ideia complexa montada pela mente a partir de impressões.", "Miragem sensorial."], certa: 1 },
+            { q: "Qual princípio de Hume associa ideias pela proximidade no tempo ou espaço?", op: ["Semelhança.", "Causalidade.", "Contiguidade."], certa: 2 },
+            
+            // Novas perguntas para evitar repetição (total de 30 agora)
+            { q: "Segundo Locke, a cor de uma maçã é uma:", op: ["Qualidade primária (está no objeto material).", "Qualidade secundária (depende da nossa percepção).", "Ideia inata (já nascemos sabendo o que é o vermelho)."], certa: 1 },
+            { q: "Qual destas NÃO é uma das três leis de associação de ideias segundo David Hume?", op: ["Semelhança.", "Contradição.", "Causa e Efeito."], certa: 1 },
+            { q: "A famosa frase 'Não há nada no intelecto que não tenha passado antes pelos sentidos' resume a visão do:", op: ["Racionalismo de Descartes.", "Empirismo de Locke.", "Idealismo platônico."], certa: 1 },
+            { q: "O que Descartes entende por 'Res Cogitans'?", op: ["A coisa pensante (a mente/alma, independente do corpo).", "O mundo material e físico (o corpo).", "A natureza de Deus."], certa: 0 },
+            { q: "Para Hume, toda ideia deriva diretamente de uma:", op: ["Impressão sensível correspondente.", "Ideia inata colocada por Deus.", "Dedução matemática pura."], certa: 0 },
+            { q: "Na divisão de Locke, a 'Sensação' capta o mundo exterior. O que a 'Reflexão' capta?", op: ["As operações da nossa própria mente (pensar, duvidar, crer).", "As leis da física universal.", "As qualidades primárias de um objeto."], certa: 0 },
+            { q: "No chamado Argumento do Sonho, Descartes argumenta principalmente que:", op: ["Os sonhos são premonições do futuro enviadas por anjos.", "Não há critérios 100% seguros para distinguir o sono da vigília.", "O ato de sonhar comprova a existência do corpo material."], certa: 1 },
+            { q: "A qual pensador é atribuída a polêmica ideia de que nosso conhecimento sobre o futuro (ex: 'a gravidade vai funcionar amanhã') baseia-se apenas no costume humano?", op: ["René Descartes.", "John Locke.", "David Hume."], certa: 2 },
+            { q: "Como Descartes chamou as coisas materiais, cujo atributo principal é ocupar um lugar no espaço?", op: ["Res Extensa.", "Res Cogitans.", "Ideias Adventícias."], certa: 0 },
+            { q: "Qual filósofo empirista dedicou o Livro I de sua obra principal (Ensaio) unicamente para refutar a existência de ideias inatas?", op: ["David Hume.", "René Descartes.", "John Locke."], certa: 2 },
+            { q: "Hume divide as percepções da mente humana principalmente pelo seu grau de:", op: ["Verdade científica e falsidade.", "Força, vivacidade e nitidez.", "Extensão no espaço e duração no tempo."], certa: 1 },
+            { q: "Segundo a filosofia de Locke, características como figura geométrica, movimento e solidez de um objeto são exemplos de:", op: ["Qualidades primárias (reais no objeto).", "Qualidades secundárias (subjetivas).", "Delírios provocados pelos sentidos."], certa: 0 },
+            { q: "O que significa a ameaça do 'Solipsismo', o grande desafio que Descartes enfrenta na segunda Meditação?", op: ["A crença de que só a minha mente existe e o resto do universo pode ser ilusão.", "A certeza inabalável de que Deus existe e é bom.", "A ausência total e irreparável de pensamento livre."], certa: 0 },
+            { q: "O Empirismo tem como tese central que o conhecimento humano começa, inevitavelmente, com:", op: ["A intuição racional pura e abstrata.", "A experiência sensorial (sentidos).", "O estudo dos clássicos gregos."], certa: 1 },
+            { q: "Para Descartes, um conhecimento considerado 'claro e distinto' é aquele que:", op: ["Foi comprovado por múltiplos experimentos de laboratório.", "Se apresenta à razão de forma tão evidente que não deixa espaço para dúvida.", "Foi ensinado e validado pela tradição filosófica ao longo dos séculos."], certa: 1 }
+        ]
+    };
+
+    let decks = { bonusRac: [], bonusEmp: [], trapRac: [], trapEmp: [], perguntas: [] };
+    
+    function resetarBaralhos() {
+        decks = {
+            bonusRac: [...dbOriginal.bonusRac],
+            bonusEmp: [...dbOriginal.bonusEmp],
+            trapRac: [...dbOriginal.trapRac],
+            trapEmp: [...dbOriginal.trapEmp],
+            perguntas: [...dbOriginal.perguntas]
+        };
+    }
+    resetarBaralhos();
+
+    function sacarCarta(tipo) {
+        if(decks[tipo].length === 0) decks[tipo] = [...dbOriginal[tipo]];
+        const index = Math.floor(Math.random() * decks[tipo].length);
+        const carta = decks[tipo][index];
+        decks[tipo].splice(index, 1);
+        return carta;
+    }
+
+    function atualizarFormularios() {
+        const num = document.getElementById("num-players").value;
+        const container = document.getElementById("players-inputs");
+        container.innerHTML = "";
+        const cores = ["Vermelho", "Azul", "Amarelo", "Roxo"];
+        for(let i = 0; i < num; i++) {
+            container.innerHTML += `
+                <div class="player-setup">
+                    <b style="color: #fff;">P${i+1} (${cores[i]}):</b>
+                    <input type="text" id="nome-p${i}" placeholder="Nome" value="Jogador ${i+1}">
+                    <select id="fac-p${i}">
+                        <option value="rac">Racionalista</option>
+                        <option value="emp">Empirista</option>
+                    </select>
+                </div>`;
+        }
+    }
+    atualizarFormularios();
+
+    function iniciarJogo() {
+        const bgMusic = document.getElementById("bg-music");
+        bgMusic.volume = 0.3; 
+        
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        bgMusic.play().then(() => {
+            document.getElementById("btnMusic").innerText = "🔊 Pausar Música";
+            musicaLigada = true;
+        }).catch(e => {
+            musicaLigada = false;
+            document.getElementById("btnMusic").innerText = "🔇 Tocar Música";
+        });
+
+        const num = parseInt(document.getElementById("num-players").value);
+        jogadores = [];
+        for(let i = 0; i < num; i++) {
+            jogadores.push({
+                id: i,
+                nome: document.getElementById(`nome-p${i}`).value || `Jogador ${i+1}`,
+                fac: document.getElementById(`fac-p${i}`).value,
+                pos: 1
+            });
+        }
+        
+        document.getElementById("setup-screen").style.display = "none";
+        document.getElementById("game-screen").style.display = "flex";
+        
+        gerarTabuleiro();
+        atualizarPlacar();
+        atualizarPosicoes();
+        jogando = true;
+        document.getElementById("log-container").innerHTML = "";
+        logAction("O jogo começou! A Jornada do Conhecimento se inicia.");
+    }
+
+    function gerarTabuleiro() {
+        const board = document.getElementById("board-wrapper");
+        board.innerHTML = "";
+        mapaCasas = {};
+        
+        for(let i = 1; i <= totalCasas; i++) {
+            const div = document.createElement("div");
+            div.className = "square";
+            div.id = `casa-${i}`;
+            
+            let linha = Math.floor((i - 1) / 10);
+            let col = (i - 1) % 10;
+            if(linha % 2 !== 0) col = 9 - col; 
+            
+            div.style.bottom = `${linha * 10}%`;
+            div.style.left = `${col * 10}%`;
+            div.innerHTML = i;
+            
+            // NOVO SISTEMA DE BALANCEAMENTO (Cíclico de 6 casas)
+            // Isso garante exatamente a mesma quantidade de casas Rac, Emp e Perg.
+            if(i > 1 && i < 100) {
+                let mod = i % 6; 
+                if(mod === 1) { 
+                    div.classList.add("casa-rac"); mapaCasas[i] = { tipo: "rac" }; 
+                } else if(mod === 3) { 
+                    div.classList.add("casa-emp"); mapaCasas[i] = { tipo: "emp" }; 
+                } else if(mod === 5) { 
+                    div.classList.add("casa-perg"); mapaCasas[i] = { tipo: "perg" }; 
+                }
+            }
+            board.appendChild(div);
+        }
+    }
+
+    function atualizarPlacar() {
+        const score = document.getElementById("scoreboard");
+        score.innerHTML = "";
+        jogadores.forEach((j, index) => {
+            const isAtivo = index === turnoAtual ? "active" : "";
+            const facao = j.fac === 'rac' ? 'Racionalista' : 'Empirista';
+            score.innerHTML += `
+                <div class="score-item ${isAtivo}">
+                    <span class="pawn-icon" style="background: ${coresHex[j.id]}"></span>
+                    <div style="text-align: left;">
+                        <b style="color: ${index === turnoAtual ? 'var(--destaque-cor)' : '#fff'}">${j.nome}</b><br>
+                        <small>${facao} | Casa: ${j.pos}</small>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function logAction(texto) {
+        const log = document.getElementById("log-container");
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        entry.innerHTML = texto;
+        log.prepend(entry);
+        while(log.children.length > 6) log.removeChild(log.lastChild);
+    }
+
+    function atualizarPosicoes() {
+        document.querySelectorAll('.player-token').forEach(p => p.remove());
+        jogadores.forEach(j => {
+            const casaDiv = document.getElementById(`casa-${j.pos}`);
+            if(casaDiv) {
+                const pDiv = document.createElement("div");
+                pDiv.className = `player-token p${j.id + 1}`;
+                const label = document.createElement("div");
+                label.className = "player-name-label";
+                label.innerText = j.nome;
+                pDiv.appendChild(label);
+                casaDiv.appendChild(pDiv);
+            }
+        });
+        atualizarPlacar();
+    }
+
+    function rolarDado() {
+        if(!jogando) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        document.getElementById("btnDado").disabled = true;
+        
+        const dado = Math.floor(Math.random() * 6) + 1;
+        const j = jogadores[turnoAtual];
+        
+        document.getElementById("dice-result").innerText = dado;
+        logAction(`<span class="log-highlight">${j.nome}</span> tirou ${dado} e foi para a casa ${Math.min(j.pos + dado, 100)}.`);
+        
+        j.pos += dado;
+        if(j.pos >= totalCasas) {
+            j.pos = totalCasas;
+            atualizarPosicoes();
+            vitoria(j);
+            return;
+        }
+        
+        atualizarPosicoes();
+        setTimeout(() => verificarCasa(j), 800);
+    }
+
+    function verificarCasa(j) {
+        const casa = mapaCasas[j.pos];
+        if(!casa) {
+            passarTurno();
+            return;
+        }
+
+        if(casa.tipo === "rac") {
+            if(j.fac === 'rac') {
+                tocarSom('positivo');
+                const ev = sacarCarta('bonusRac');
+                mostrarModal("Bônus Racionalista", `${ev.desc}<br><br><b>Avança ${ev.avanca} casas.</b>`, () => moverExtra(j, ev.avanca));
+            } else {
+                tocarSom('negativo');
+                const ev = sacarCarta('trapRac');
+                mostrarModal("Armadilha Racionalista", `${ev.desc}<br><br><b>Volta ${ev.recuo} casas.</b>`, () => moverExtra(j, -ev.recuo));
+            }
+        } 
+        else if(casa.tipo === "emp") {
+            if(j.fac === 'emp') {
+                tocarSom('positivo');
+                const ev = sacarCarta('bonusEmp');
+                mostrarModal("Bônus Empirista", `${ev.desc}<br><br><b>Avança ${ev.avanca} casas.</b>`, () => moverExtra(j, ev.avanca));
+            } else {
+                tocarSom('negativo');
+                const ev = sacarCarta('trapEmp');
+                mostrarModal("Armadilha Empirista", `${ev.desc}<br><br><b>Volta ${ev.recuo} casas.</b>`, () => moverExtra(j, -ev.recuo));
+            }
+        }
+        else if(casa.tipo === "perg") {
+            fazerPergunta(j);
+        }
+    }
+
+    function moverExtra(j, qtde) {
+        j.pos += qtde;
+        if(j.pos < 1) j.pos = 1;
+        
+        const acaoTxt = qtde > 0 ? `avançou ${qtde}` : `voltou ${Math.abs(qtde)}`;
+        logAction(`<span class="log-highlight">${j.nome}</span> ${acaoTxt} casas após a ação especial.`);
+        
+        if(j.pos >= totalCasas) {
+            j.pos = totalCasas;
+            atualizarPosicoes();
+            vitoria(j);
+            return;
+        }
+        atualizarPosicoes();
+        passarTurno();
+    }
+
+    function passarTurno() {
+        turnoAtual = (turnoAtual + 1) % jogadores.length;
+        document.getElementById("btnDado").disabled = false;
+        document.getElementById("dice-result").innerText = "🎲";
+        atualizarPlacar();
+    }
+
+    function fazerPergunta(j) {
+        const p = sacarCarta('perguntas');
+        let htmlBtns = "";
+        p.op.forEach((opcao, index) => {
+            htmlBtns += `<button class="btn-opcao" onclick="responderPergunta(${index}, ${p.certa})">${opcao}</button>`;
+        });
+        
+        document.getElementById("modal-titulo").innerText = "Desafio Filosófico";
+        document.getElementById("modal-texto").innerHTML = p.q;
+        document.getElementById("modal-opcoes").innerHTML = htmlBtns;
+        document.getElementById("modal-btn-ok").style.display = "none";
+        document.getElementById("modal-geral").style.display = "flex";
+    }
+
+    function responderPergunta(escolhida, certa) {
+        const j = jogadores[turnoAtual];
+        document.getElementById("modal-opcoes").innerHTML = "";
+        const btnOk = document.getElementById("modal-btn-ok");
+        btnOk.style.display = "block";
+        
+        if(escolhida === certa) {
+            tocarSom('positivo');
+            document.getElementById("modal-titulo").innerText = "Resposta Correta!";
+            document.getElementById("modal-texto").innerHTML = "Excelente demonstração de conhecimento.<br><b>Avança 3 casas!</b>";
+            btnOk.onclick = () => { fecharModal(); moverExtra(j, 3); };
+        } else {
+            tocarSom('negativo');
+            document.getElementById("modal-titulo").innerText = "Resposta Errada!";
+            document.getElementById("modal-texto").innerHTML = "Seu raciocínio falhou.<br><b>Volta 3 casas!</b>";
+            btnOk.onclick = () => { fecharModal(); moverExtra(j, -3); };
+        }
+    }
+
+    function mostrarModal(titulo, texto, acaoCallback) {
+        document.getElementById("modal-titulo").innerText = titulo;
+        document.getElementById("modal-texto").innerHTML = texto;
+        document.getElementById("modal-opcoes").innerHTML = ""; 
+        
+        const btnOk = document.getElementById("modal-btn-ok");
+        btnOk.style.display = "block";
+        btnOk.innerText = "Continuar";
+        btnOk.onclick = () => { 
+            fecharModal(); 
+            if(acaoCallback) acaoCallback(); 
+        };
+        
+        document.getElementById("modal-btn-restart").style.display = "none";
+        document.getElementById("modal-geral").style.display = "flex";
+    }
+
+    function fecharModal() {
+        document.getElementById("modal-geral").style.display = "none";
+    }
+
+    function vitoria(j) {
+        jogando = false;
+        tocarSom('positivo');
+        logAction(`🏆 <span class="log-highlight">${j.nome}</span> venceu o jogo!`);
+        
+        document.getElementById("modal-titulo").innerText = "🎉 TEMOS UM VENCEDOR! 🎉";
+        document.getElementById("modal-texto").innerHTML = `Parabéns, ${j.nome}!<br>Você consolidou o saber e venceu a Jornada!`;
+        document.getElementById("modal-opcoes").innerHTML = "";
+        
+        document.getElementById("modal-btn-ok").style.display = "none";
+        document.getElementById("modal-btn-restart").style.display = "inline-block";
+        document.getElementById("modal-geral").style.display = "flex";
+    }
+
+    function reiniciarJogo() {
+        fecharModal();
+        jogando = false;
+        turnoAtual = 0;
+        resetarBaralhos();
+        
+        document.getElementById("game-screen").style.display = "none";
+        document.getElementById("setup-screen").style.display = "flex";
+        
+        document.getElementById("modal-btn-restart").style.display = "none";
+        document.getElementById("btnDado").disabled = false;
+        document.getElementById("dice-result").innerText = "🎲";
+    }
+
+    let musicaLigada = false;
+    function toggleMusic() {
+        const bgMusic = document.getElementById("bg-music");
+        const btn = document.getElementById("btnMusic");
+        if(musicaLigada) {
+            bgMusic.pause();
+            btn.innerText = "🔊 Tocar Música";
+        } else {
+            bgMusic.play();
+            btn.innerText = "🔊 Pausar Música";
+        }
+        musicaLigada = !musicaLigada;
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.log(e));
+        else if (document.exitFullscreen) document.exitFullscreen();
+    }
+</script>
+</body>
+</html>
